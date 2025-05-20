@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore, UserRole, mockUsers } from '@/lib/auth';
@@ -37,6 +36,9 @@ const LoginPage: React.FC = () => {
     if (user) {
       setEmail(user.email);
     }
+    
+    // Auto-fill password field for demo
+    setPassword("password123");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -74,12 +76,12 @@ const LoginPage: React.FC = () => {
     }, 1000);
   };
 
-  const roleCards: { role: UserRole; icon: string }[] = [
-    { role: 'student', icon: '👨‍🎓' },
-    { role: 'parent', icon: '👪' },
-    { role: 'tutor', icon: '👩‍🏫' },
-    { role: 'admin', icon: '👨‍💼' },
-    { role: 'service', icon: '🛠️' },
+  const roleCards: { role: UserRole; icon: string; color: string }[] = [
+    { role: 'student', icon: '👨‍🎓', color: 'bg-blue-50 border-blue-200' },
+    { role: 'parent', icon: '👪', color: 'bg-green-50 border-green-200' },
+    { role: 'tutor', icon: '👩‍🏫', color: 'bg-yellow-50 border-yellow-200' },
+    { role: 'admin', icon: '👨‍💼', color: 'bg-red-50 border-red-200 ring-2 ring-red-400' },
+    { role: 'service', icon: '🛠️', color: 'bg-purple-50 border-purple-200' },
   ];
 
   return (
@@ -103,13 +105,18 @@ const LoginPage: React.FC = () => {
           <CardContent>
             {!selectedRole ? (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-                {roleCards.map(({ role, icon }) => (
+                {roleCards.map(({ role, icon, color }) => (
                   <Button
                     key={role}
                     variant="outline"
-                    className={`flex flex-col h-24 items-center justify-center gap-2 hover:bg-tutor-primary/10`}
+                    className={`flex flex-col h-24 items-center justify-center gap-2 hover:bg-tutor-primary/10 ${color} ${role === 'admin' ? 'relative' : ''}`}
                     onClick={() => handleRoleSelect(role)}
                   >
+                    {role === 'admin' && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1 rounded-full">
+                        Admin
+                      </span>
+                    )}
                     <span className="text-2xl">{icon}</span>
                     <span className="text-sm">{t(role, language)}</span>
                   </Button>
@@ -158,6 +165,15 @@ const LoginPage: React.FC = () => {
                       : 'Entrando...'
                     : t('login', language)}
                 </Button>
+                {selectedRole === 'admin' && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                    <p className="text-sm text-center text-red-700">
+                      {language === 'en' 
+                        ? "You're logging in as an administrator" 
+                        : "Você está entrando como administrador"}
+                    </p>
+                  </div>
+                )}
               </form>
             )}
           </CardContent>

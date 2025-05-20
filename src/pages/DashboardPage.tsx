@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/lib/auth';
-import { LogOut } from 'lucide-react';
+import { useAuthStore, hasRole } from '@/lib/auth';
+import { LogOut, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const DashboardPage: React.FC = () => {
@@ -33,14 +33,26 @@ const DashboardPage: React.FC = () => {
         <h1 className="text-3xl font-bold">
           {language === 'en' ? 'Dashboard' : 'Painel de Controle'}
         </h1>
-        <Button 
-          variant="outline" 
-          onClick={handleLogout}
-          className="flex items-center gap-2"
-        >
-          <LogOut size={18} />
-          {language === 'en' ? 'Sign Out' : 'Sair'}
-        </Button>
+        <div className="flex items-center gap-3">
+          {hasRole(user, 'admin') && (
+            <Button 
+              variant="default"
+              onClick={() => navigate('/admin')}
+              className="flex items-center gap-2"
+            >
+              <Shield size={18} />
+              {language === 'en' ? 'Admin Panel' : 'Painel Admin'}
+            </Button>
+          )}
+          <Button 
+            variant="outline" 
+            onClick={handleLogout}
+            className="flex items-center gap-2"
+          >
+            <LogOut size={18} />
+            {language === 'en' ? 'Sign Out' : 'Sair'}
+          </Button>
+        </div>
       </div>
 
       <div className="bg-white shadow-md rounded-lg p-6">
