@@ -14,6 +14,10 @@ import UserManagementPage from "./pages/UserManagementPage";
 import AboutPage from "./pages/AboutPage";
 import ServicesPage from "./pages/ServicesPage";
 import ContactPage from "./pages/ContactPage";
+import StudentDashboardLayout from "./pages/student/StudentDashboardLayout";
+import StudentDashboardPage from "./pages/student/StudentDashboardPage";
+import StudentHistoryPage from "./pages/student/StudentHistoryPage";
+import StudentProgressPage from "./pages/student/StudentProgressPage";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +37,16 @@ const App = () => (
           <Route path="/about" element={<AboutPage />} />
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/contact" element={<ContactPage />} />
+          
+          {/* Student Dashboard Routes */}
+          <Route path="/student" element={<StudentDashboardLayout />}>
+            <Route index element={<StudentDashboardPage />} />
+            <Route path="history" element={<StudentHistoryPage />} />
+            <Route path="progress" element={<StudentProgressPage />} />
+            {/* Additional student routes will be added here later */}
+            <Route path="*" element={<NotFound />} />
+          </Route>
+          
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
