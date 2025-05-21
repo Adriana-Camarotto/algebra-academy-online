@@ -9,11 +9,12 @@ const LanguageSelector: React.FC = () => {
     <div className="relative flex items-center">
       <select
         value={language}
-        onChange={(e) => setLanguage(e.target.value as 'en' | 'pt')}
+        onChange={(e) => setLanguage(e.target.value as 'en' | 'uk' | 'pt')}
         className="appearance-none bg-transparent border-none text-sm cursor-pointer focus:outline-none pr-8"
         aria-label="Select language"
       >
-        <option value="en">🇺🇸 EN</option>
+        <option value="en">🇺🇸 EN (US)</option>
+        <option value="uk">🇬🇧 EN (UK)</option>
         <option value="pt">🇧🇷 PT</option>
       </select>
       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-1">

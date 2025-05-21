@@ -76,6 +76,81 @@ const translations = {
     hours: "Hours",
   },
   
+  uk: {
+    // Common
+    appName: "Math Tutor Pro",
+    login: "Login",
+    signup: "Sign Up",
+    logout: "Logout",
+    welcome: "Welcome",
+    language: "Language",
+    english: "English",
+    portuguese: "Portuguese",
+    
+    // Landing Page
+    heroTitle: "Advanced Mathematics Tutoring",
+    heroSubtitle: "Personalised lessons for students at all levels",
+    learnMore: "Learn More",
+    bookLesson: "Book a Lesson",
+    aboutTitle: "About Me",
+    aboutDesc: "I'm a passionate mathematics tutor with over 10 years of experience teaching students from elementary to university level.",
+    servicesTitle: "My Services",
+    service1: "One-on-One Tutoring",
+    service1Desc: "Personalised lessons tailored to your learning needs",
+    service2: "Group Sessions",
+    service2Desc: "Cost-effective learning in small focused groups",
+    service3: "Exam Preparation",
+    service3Desc: "Targeted preparation for GCSE, A-Level, and university exams",
+    testimonials: "Testimonials",
+    faq: "Frequently Asked Questions",
+    contact: "Contact Me",
+    
+    // Auth Pages
+    selectRole: "Select Your Role",
+    student: "Student",
+    parent: "Parent",
+    tutor: "Tutor",
+    admin: "Administrator",
+    service: "Service Provider",
+    email: "Email",
+    password: "Password",
+    forgotPassword: "Forgot Password?",
+    loginAs: "Login as",
+    
+    // Dashboard
+    dashboard: "Dashboard",
+    overview: "Overview",
+    upcomingLessons: "Upcoming Lessons",
+    profile: "Profile",
+    settings: "Settings",
+    
+    // Student Dashboard
+    myLessons: "My Lessons",
+    progress: "Progress",
+    bookings: "Bookings",
+    resources: "Resources",
+    feedback: "Feedback",
+    
+    // Error Messages
+    error404: "Page not found",
+    unauthorized: "You don't have access to this page",
+    
+    // Forms
+    firstName: "First Name",
+    lastName: "Last Name",
+    message: "Message",
+    submit: "Submit",
+    cancel: "Cancel",
+    
+    // Booking
+    selectDate: "Select Date",
+    selectTime: "Select Time",
+    paymentDetails: "Payment Details",
+    confirmation: "Confirmation",
+    price: "Price",
+    hours: "Hours",
+  },
+  
   pt: {
     // Common
     appName: "Tutora de Matemática Pro",
@@ -152,7 +227,7 @@ const translations = {
   }
 };
 
-export type Language = 'en' | 'pt';
+export type Language = 'en' | 'uk' | 'pt';
 export type TranslationKey = keyof typeof translations.en;
 
 // Function to get translation
