@@ -1,6 +1,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { Language } from "./i18n";
 
 // Define user roles
 export type UserRole = 'student' | 'parent' | 'tutor' | 'admin' | 'service';
@@ -17,10 +18,10 @@ export interface User {
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
-  language: 'en' | 'pt';
+  language: Language;
   login: (user: User) => void;
   logout: () => void;
-  setLanguage: (language: 'en' | 'pt') => void;
+  setLanguage: (language: Language) => void;
 }
 
 // Create auth store with persistence
