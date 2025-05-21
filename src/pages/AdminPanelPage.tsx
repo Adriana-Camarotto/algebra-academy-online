@@ -40,6 +40,10 @@ const AdminPanelPage: React.FC = () => {
     return null;
   }
 
+  const handleUserManagement = () => {
+    navigate('/admin/users');
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
@@ -69,7 +73,7 @@ const AdminPanelPage: React.FC = () => {
               ? 'View and manage all user accounts.' 
               : 'Visualize e gerencie todas as contas de usuários.'}
           </p>
-          <Button className="w-full">
+          <Button className="w-full" onClick={handleUserManagement}>
             {language === 'en' ? 'Manage Users' : 'Gerenciar Usuários'}
           </Button>
         </div>
