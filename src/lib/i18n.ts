@@ -51,10 +51,13 @@ const translations = {
     
     // Student Dashboard
     myLessons: "My Lessons",
+    schedule: "Schedule",
+    history: "History",
     progress: "Progress",
     bookings: "Bookings",
     resources: "Resources",
     feedback: "Feedback",
+    lessonHistory: "Lesson History",
     
     // Error Messages
     error404: "Page not found",
@@ -126,10 +129,13 @@ const translations = {
     
     // Student Dashboard
     myLessons: "My Lessons",
+    schedule: "Schedule",
+    history: "History",
     progress: "Progress",
     bookings: "Bookings",
     resources: "Resources",
     feedback: "Feedback",
+    lessonHistory: "Lesson History",
     
     // Error Messages
     error404: "Page not found",
@@ -201,10 +207,13 @@ const translations = {
     
     // Student Dashboard
     myLessons: "Minhas Aulas",
+    schedule: "Agenda",
+    history: "Histórico",
     progress: "Progresso",
     bookings: "Agendamentos",
     resources: "Recursos",
     feedback: "Feedback",
+    lessonHistory: "Histórico de Aulas",
     
     // Error Messages
     error404: "Página não encontrada",

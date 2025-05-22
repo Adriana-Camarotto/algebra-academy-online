@@ -34,32 +34,32 @@ const StudentSidebar = () => {
       path: '/student',
     },
     {
-      title: t('schedule', language) || (language === 'en' ? 'Schedule' : 'Agenda'),
+      title: t('myLessons', language),
       icon: Calendar,
       path: '/student/schedule',
     },
     {
-      title: t('lessonHistory', language) || (language === 'en' ? 'Lesson History' : 'Histórico de Aulas'),
+      title: t('myLessons', language) + ' ' + t('history', language),
       icon: History,
       path: '/student/history',
     },
     {
-      title: t('progress', language) || (language === 'en' ? 'My Progress' : 'Meu Progresso'),
+      title: t('progress', language),
       icon: ChartBar,
       path: '/student/progress',
     },
     {
-      title: t('feedback', language) || (language === 'en' ? 'Feedback' : 'Avaliações'),
+      title: t('feedback', language),
       icon: MessageSquare,
       path: '/student/feedback',
     },
     {
-      title: t('resources', language) || (language === 'en' ? 'Resources' : 'Recursos'),
+      title: t('resources', language),
       icon: FileText,
       path: '/student/resources',
     },
     {
-      title: t('settings', language) || (language === 'en' ? 'Settings' : 'Configurações'),
+      title: t('settings', language),
       icon: Settings,
       path: '/student/settings',
     },
