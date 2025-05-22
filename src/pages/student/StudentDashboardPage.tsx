@@ -14,11 +14,14 @@ import {
 const StudentDashboardPage = () => {
   const { language, user } = useAuthStore();
   
+  // Convert language to 'en' or 'pt' for the data functions
+  const dataLanguage = language === 'pt' ? 'pt' : 'en';
+  
   // Get data
-  const progressData = getProgressData(language);
-  const upcomingLessons = getUpcomingLessons(language);
-  const recentLessons = getRecentLessons(language);
-  const formatDate = createDateFormatter(language);
+  const progressData = getProgressData(dataLanguage);
+  const upcomingLessons = getUpcomingLessons(dataLanguage);
+  const recentLessons = getRecentLessons(dataLanguage);
+  const formatDate = createDateFormatter(dataLanguage);
 
   return (
     <div className="space-y-6">
@@ -30,17 +33,17 @@ const StudentDashboardPage = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <ProgressChart progressData={progressData} language={language} />
+        <ProgressChart progressData={progressData} language={dataLanguage} />
         <UpcomingLessons 
           upcomingLessons={upcomingLessons} 
-          language={language} 
+          language={dataLanguage} 
           formatDate={formatDate} 
         />
       </div>
 
       <RecentLessonHistory 
         recentLessons={recentLessons} 
-        language={language} 
+        language={dataLanguage} 
         formatDate={formatDate} 
       />
     </div>
