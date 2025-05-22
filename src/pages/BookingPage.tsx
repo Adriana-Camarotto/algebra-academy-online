@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuthStore } from '@/lib/auth';
 import { t } from '@/lib/i18n';
 import Header from '@/components/Header';
@@ -9,9 +9,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { motion } from 'framer-motion';
+import { useToast } from '@/hooks/use-toast';
 
 const BookingPage: React.FC = () => {
   const { language } = useAuthStore();
+  const { toast } = useToast();
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
   // Mock data for available time slots
   const availableSlots = {
@@ -28,6 +32,25 @@ const BookingPage: React.FC = () => {
     'wednesday': language === 'en' ? 'Wednesday' : 'Quarta',
     'thursday': language === 'en' ? 'Thursday' : 'Quinta',
     'friday': language === 'en' ? 'Friday' : 'Sexta',
+  };
+
+  const handleTimeSelect = (time: string) => {
+    setSelectedTime(time);
+  };
+
+  const handleTabChange = (day: string) => {
+    setSelectedDay(day);
+    setSelectedTime(null);
+  };
+
+  const handleConfirmBooking = () => {
+    toast({
+      title: language === 'en' ? 'Booking Confirmed' : 'Agendamento Confirmado',
+      description: language === 'en' 
+        ? `Your lesson has been scheduled for ${daysTranslation[selectedDay!]} at ${selectedTime}.` 
+        : `Sua aula foi agendada para ${daysTranslation[selectedDay!]} às ${selectedTime}.`,
+      variant: "default",
+    });
   };
 
   return (
@@ -67,7 +90,7 @@ const BookingPage: React.FC = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Tabs defaultValue="monday">
+                <Tabs defaultValue="monday" onValueChange={handleTabChange}>
                   <TabsList className="grid grid-cols-5">
                     {Object.keys(availableSlots).map(day => (
                       <TabsTrigger key={day} value={day}>
@@ -82,8 +105,11 @@ const BookingPage: React.FC = () => {
                         {slots.map(slot => (
                           <Button 
                             key={slot} 
-                            variant="outline" 
-                            className="hover:bg-primary hover:text-white transition-colors"
+                            variant={selectedTime === slot && selectedDay === day ? "default" : "outline"}
+                            className={selectedTime === slot && selectedDay === day 
+                              ? "bg-primary text-white" 
+                              : "hover:bg-primary hover:text-white transition-colors"}
+                            onClick={() => handleTimeSelect(slot)}
                           >
                             {slot}
                           </Button>
@@ -118,13 +144,33 @@ const BookingPage: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">
+                    {language === 'en' ? 'Day' : 'Dia'}:
+                  </p>
+                  <p className="font-medium">
+                    {selectedDay ? daysTranslation[selectedDay] : language === 'en' ? 'Not selected' : 'Não selecionado'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">
+                    {language === 'en' ? 'Time' : 'Horário'}:
+                  </p>
+                  <p className="font-medium">
+                    {selectedTime || (language === 'en' ? 'Not selected' : 'Não selecionado')}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">
                     {language === 'en' ? 'Price' : 'Preço'}:
                   </p>
                   <p className="font-medium">$60.00</p>
                 </div>
               </CardContent>
               <CardFooter>
-                <Button disabled className="w-full">
+                <Button 
+                  className="w-full" 
+                  disabled={!selectedDay || !selectedTime}
+                  onClick={handleConfirmBooking}
+                >
                   {language === 'en' ? 'Confirm Booking' : 'Confirmar Agendamento'}
                 </Button>
               </CardFooter>
