@@ -14,7 +14,7 @@ import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
 const BookingPage: React.FC = () => {
   const { language } = useAuthStore();
@@ -23,12 +23,6 @@ const BookingPage: React.FC = () => {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [isProcessing, setIsProcessing] = useState(false);
-
-  // Initialize Supabase client
-  const supabase = createClient(
-    import.meta.env.VITE_SUPABASE_URL,
-    import.meta.env.VITE_SUPABASE_ANON_KEY
-  );
 
   // Mock data for available time slots
   const availableSlots = {
@@ -180,7 +174,6 @@ const BookingPage: React.FC = () => {
                         onSelect={setSelectedDate}
                         disabled={(date) => date < new Date()}
                         initialFocus
-                        className="pointer-events-auto"
                       />
                     </PopoverContent>
                   </Popover>
