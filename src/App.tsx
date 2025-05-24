@@ -15,6 +15,7 @@ import AboutPage from "./pages/AboutPage";
 import ServicesPage from "./pages/ServicesPage";
 import ContactPage from "./pages/ContactPage";
 import BookingPage from "./pages/BookingPage";
+import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import StudentDashboardLayout from "./pages/student/StudentDashboardLayout";
 import StudentDashboardPage from "./pages/student/StudentDashboardPage";
 import StudentHistoryPage from "./pages/student/StudentHistoryPage";
@@ -39,6 +40,7 @@ const App = () => (
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/booking" element={<BookingPage />} />
+          <Route path="/payment-success" element={<PaymentSuccessPage />} />
           
           {/* Student Dashboard Routes */}
           <Route path="/student" element={<StudentDashboardLayout />}>

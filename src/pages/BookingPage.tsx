@@ -4,18 +4,31 @@ import { useAuthStore } from '@/lib/auth';
 import { t } from '@/lib/i18n';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Calendar } from 'lucide-react';
+import { Calendar, CalendarIcon } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { createClient } from '@supabase/supabase-js';
 
 const BookingPage: React.FC = () => {
   const { language } = useAuthStore();
   const { toast } = useToast();
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Initialize Supabase client
+  const supabase = createClient(
+    import.meta.env.VITE_SUPABASE_URL,
+    import.meta.env.VITE_SUPABASE_ANON_KEY
+  );
 
   // Mock data for available time slots
   const availableSlots = {
@@ -43,14 +56,62 @@ const BookingPage: React.FC = () => {
     setSelectedTime(null);
   };
 
-  const handleConfirmBooking = () => {
-    toast({
-      title: language === 'en' ? 'Booking Confirmed' : 'Agendamento Confirmado',
-      description: language === 'en' 
-        ? `Your lesson has been scheduled for ${daysTranslation[selectedDay!]} at ${selectedTime}.` 
-        : `Sua aula foi agendada para ${daysTranslation[selectedDay!]} às ${selectedTime}.`,
-      variant: "default",
-    });
+  const handleConfirmBooking = async () => {
+    if (!selectedDay || !selectedTime || !selectedDate) {
+      toast({
+        title: language === 'en' ? 'Incomplete Selection' : 'Seleção Incompleta',
+        description: language === 'en' 
+          ? 'Please select a date, day and time for your lesson.' 
+          : 'Por favor, selecione uma data, dia e horário para sua aula.',
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('create-payment', {
+        body: {
+          amount: 6000, // $60.00 in cents
+          currency: 'usd',
+          product_name: language === 'en' ? 'Math Tutoring Lesson' : 'Aula de Tutoria de Matemática',
+          booking_details: {
+            date: format(selectedDate, 'yyyy-MM-dd'),
+            day: selectedDay,
+            time: selectedTime,
+          }
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data?.url) {
+        // Open Stripe checkout in a new tab
+        window.open(data.url, '_blank');
+        
+        toast({
+          title: language === 'en' ? 'Redirecting to Payment' : 'Redirecionando para Pagamento',
+          description: language === 'en' 
+            ? 'Please complete your payment in the new tab.' 
+            : 'Por favor, complete seu pagamento na nova aba.',
+          variant: "default",
+        });
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      toast({
+        title: language === 'en' ? 'Payment Error' : 'Erro no Pagamento',
+        description: language === 'en' 
+          ? 'There was an error processing your payment. Please try again.' 
+          : 'Houve um erro ao processar seu pagamento. Tente novamente.',
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -69,8 +130,8 @@ const BookingPage: React.FC = () => {
             </h1>
             <p className="text-lg text-gray-600 mb-8">
               {language === 'en' 
-                ? 'Select a day and time slot that works for you.' 
-                : 'Selecione um dia e horário que funcione para você.'}
+                ? 'Select a date, day and time slot that works for you.' 
+                : 'Selecione uma data, dia e horário que funcione para você.'}
             </p>
           </motion.div>
 
@@ -80,44 +141,85 @@ const BookingPage: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <Calendar className="h-5 w-5 text-primary" />
                   <CardTitle>
-                    {language === 'en' ? 'Available Time Slots' : 'Horários Disponíveis'}
+                    {language === 'en' ? 'Select Date and Time' : 'Selecionar Data e Horário'}
                   </CardTitle>
                 </div>
                 <CardDescription>
                   {language === 'en' 
-                    ? 'Choose your preferred day and time' 
-                    : 'Escolha seu dia e horário preferido'}
+                    ? 'Choose your preferred date, day and time' 
+                    : 'Escolha sua data, dia e horário preferido'}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="monday" onValueChange={handleTabChange}>
-                  <TabsList className="grid grid-cols-5">
-                    {Object.keys(availableSlots).map(day => (
-                      <TabsTrigger key={day} value={day}>
-                        {daysTranslation[day]}
-                      </TabsTrigger>
+              <CardContent className="space-y-6">
+                {/* Date Selection */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    {language === 'en' ? 'Select Date' : 'Selecionar Data'}
+                  </label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !selectedDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {selectedDate ? (
+                          format(selectedDate, "PPP")
+                        ) : (
+                          <span>{language === 'en' ? 'Pick a date' : 'Escolha uma data'}</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={setSelectedDate}
+                        disabled={(date) => date < new Date()}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Day and Time Selection */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    {language === 'en' ? 'Available Time Slots' : 'Horários Disponíveis'}
+                  </label>
+                  <Tabs defaultValue="monday" onValueChange={handleTabChange}>
+                    <TabsList className="grid grid-cols-5">
+                      {Object.keys(availableSlots).map(day => (
+                        <TabsTrigger key={day} value={day}>
+                          {daysTranslation[day]}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                    
+                    {Object.entries(availableSlots).map(([day, slots]) => (
+                      <TabsContent key={day} value={day} className="mt-6">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          {slots.map(slot => (
+                            <Button 
+                              key={slot} 
+                              variant={selectedTime === slot && selectedDay === day ? "default" : "outline"}
+                              className={selectedTime === slot && selectedDay === day 
+                                ? "bg-primary text-white" 
+                                : "hover:bg-primary hover:text-white transition-colors"}
+                              onClick={() => handleTimeSelect(slot)}
+                            >
+                              {slot}
+                            </Button>
+                          ))}
+                        </div>
+                      </TabsContent>
                     ))}
-                  </TabsList>
-                  
-                  {Object.entries(availableSlots).map(([day, slots]) => (
-                    <TabsContent key={day} value={day} className="mt-6">
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        {slots.map(slot => (
-                          <Button 
-                            key={slot} 
-                            variant={selectedTime === slot && selectedDay === day ? "default" : "outline"}
-                            className={selectedTime === slot && selectedDay === day 
-                              ? "bg-primary text-white" 
-                              : "hover:bg-primary hover:text-white transition-colors"}
-                            onClick={() => handleTimeSelect(slot)}
-                          >
-                            {slot}
-                          </Button>
-                        ))}
-                      </div>
-                    </TabsContent>
-                  ))}
-                </Tabs>
+                  </Tabs>
+                </div>
               </CardContent>
             </Card>
             
@@ -141,6 +243,14 @@ const BookingPage: React.FC = () => {
                     {language === 'en' ? 'Duration' : 'Duração'}:
                   </p>
                   <p className="font-medium">60 {language === 'en' ? 'minutes' : 'minutos'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">
+                    {language === 'en' ? 'Date' : 'Data'}:
+                  </p>
+                  <p className="font-medium">
+                    {selectedDate ? format(selectedDate, 'PPP') : (language === 'en' ? 'Not selected' : 'Não selecionado')}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">
@@ -168,10 +278,13 @@ const BookingPage: React.FC = () => {
               <CardFooter>
                 <Button 
                   className="w-full" 
-                  disabled={!selectedDay || !selectedTime}
+                  disabled={!selectedDay || !selectedTime || !selectedDate || isProcessing}
                   onClick={handleConfirmBooking}
                 >
-                  {language === 'en' ? 'Confirm Booking' : 'Confirmar Agendamento'}
+                  {isProcessing 
+                    ? (language === 'en' ? 'Processing...' : 'Processando...') 
+                    : (language === 'en' ? 'Confirm Booking & Pay' : 'Confirmar Agendamento e Pagar')
+                  }
                 </Button>
               </CardFooter>
             </Card>
