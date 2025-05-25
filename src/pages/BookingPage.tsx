@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuthStore } from '@/lib/auth';
 import { t } from '@/lib/i18n';
@@ -10,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -23,6 +24,7 @@ const BookingPage: React.FC = () => {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   // Mock data for available time slots
   const availableSlots = {
@@ -57,6 +59,17 @@ const BookingPage: React.FC = () => {
         description: language === 'en' 
           ? 'Please select a date, day and time for your lesson.' 
           : 'Por favor, selecione uma data, dia e horário para sua aula.',
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!termsAccepted) {
+      toast({
+        title: language === 'en' ? 'Terms Required' : 'Termos Obrigatórios',
+        description: language === 'en' 
+          ? 'Please accept the terms and conditions to proceed.' 
+          : 'Por favor, aceite os termos e condições para prosseguir.',
         variant: "destructive",
       });
       return;
@@ -267,11 +280,55 @@ const BookingPage: React.FC = () => {
                   </p>
                   <p className="font-medium">$60.00</p>
                 </div>
+
+                {/* Terms and Conditions Section */}
+                <div className="border-t pt-4 space-y-4">
+                  <div>
+                    <h4 className="font-medium text-sm mb-2">
+                      {language === 'en' ? 'Refunds & Cancellations Policy' : 'Política de Reembolsos e Cancelamentos'}
+                    </h4>
+                    <div className="text-xs text-gray-600 space-y-2">
+                      <p>
+                        {language === 'en' 
+                          ? 'Please note that refunds are not available.'
+                          : 'Por favor, note que reembolsos não estão disponíveis.'}
+                      </p>
+                      <p>
+                        {language === 'en'
+                          ? 'If for any reason you are unable to attend the class then you must contact us before the class start time for the option to have it rescheduled to either of the 2 following weeks.'
+                          : 'Se por qualquer motivo você não puder comparecer à aula, deve nos contatar antes do horário de início da aula para ter a opção de reagendá-la para qualquer uma das 2 semanas seguintes.'}
+                      </p>
+                      <p>
+                        {language === 'en'
+                          ? 'Only one rescheduling of an individual class pass is permitted and we will only reschedule a class like for like.'
+                          : 'Apenas um reagendamento de uma aula individual é permitido e só reagendaremos uma aula igual por igual.'}
+                      </p>
+                      <p>
+                        {language === 'en'
+                          ? 'Workshops and special sessions cannot be rescheduled due to the nature of the event.'
+                          : 'Workshops e sessões especiais não podem ser reagendados devido à natureza do evento.'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start space-x-2">
+                    <Checkbox 
+                      id="terms" 
+                      checked={termsAccepted}
+                      onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
+                    />
+                    <Label htmlFor="terms" className="text-xs leading-relaxed">
+                      {language === 'en'
+                        ? 'I have read and agree to the terms above *'
+                        : 'Li e concordo com os termos acima *'}
+                    </Label>
+                  </div>
+                </div>
               </CardContent>
               <CardFooter>
                 <Button 
                   className="w-full" 
-                  disabled={!selectedDay || !selectedTime || !selectedDate || isProcessing}
+                  disabled={!selectedDay || !selectedTime || !selectedDate || !termsAccepted || isProcessing}
                   onClick={handleConfirmBooking}
                 >
                   {isProcessing 
