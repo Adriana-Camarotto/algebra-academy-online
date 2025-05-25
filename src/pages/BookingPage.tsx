@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '@/lib/auth';
 import { t } from '@/lib/i18n';
 import Header from '@/components/Header';
@@ -35,6 +36,15 @@ const BookingPage: React.FC = () => {
     'friday': ['9:00', '11:00', '15:00'],
   };
 
+  // Mock booked slots - in real app, this would come from database
+  const bookedSlots = {
+    '2025-01-27': { 'monday': ['9:00', '14:00'] },
+    '2025-01-28': { 'tuesday': ['11:00'] },
+    '2025-01-29': { 'wednesday': ['12:00'] },
+    '2025-01-30': { 'thursday': ['10:00'] },
+    '2025-01-31': { 'friday': ['15:00'] },
+  };
+
   const daysTranslation = {
     'monday': language === 'en' ? 'Monday' : 'Segunda',
     'tuesday': language === 'en' ? 'Tuesday' : 'Terça',
@@ -43,13 +53,87 @@ const BookingPage: React.FC = () => {
     'friday': language === 'en' ? 'Friday' : 'Sexta',
   };
 
+  const dayMap = {
+    1: 'monday',
+    2: 'tuesday', 
+    3: 'wednesday',
+    4: 'thursday',
+    5: 'friday'
+  };
+
+  // Get weekday from date
+  const getWeekdayFromDate = (date: Date): string | null => {
+    const dayOfWeek = date.getDay();
+    return dayMap[dayOfWeek] || null;
+  };
+
+  // Auto-select day when date changes
+  useEffect(() => {
+    if (selectedDate) {
+      const weekday = getWeekdayFromDate(selectedDate);
+      if (weekday && availableSlots[weekday]) {
+        setSelectedDay(weekday);
+        setSelectedTime(null); // Reset time when day changes
+      } else {
+        setSelectedDay(null);
+        setSelectedTime(null);
+      }
+    }
+  }, [selectedDate]);
+
+  // Filter calendar to show only available weekdays
+  const isDateAvailable = (date: Date): boolean => {
+    const weekday = getWeekdayFromDate(date);
+    return weekday ? !!availableSlots[weekday] : false;
+  };
+
+  // Check if time slot is available (not booked)
+  const isTimeSlotAvailable = (day: string, time: string, date: Date): boolean => {
+    if (!date) return true;
+    
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const dayBookings = bookedSlots[dateStr];
+    
+    if (!dayBookings || !dayBookings[day]) return true;
+    
+    return !dayBookings[day].includes(time);
+  };
+
   const handleTimeSelect = (time: string) => {
-    setSelectedTime(time);
+    if (selectedDate && selectedDay && isTimeSlotAvailable(selectedDay, time, selectedDate)) {
+      setSelectedTime(time);
+    }
   };
 
   const handleTabChange = (day: string) => {
     setSelectedDay(day);
     setSelectedTime(null);
+    
+    // If user manually selects a day, clear the date to show available dates for that day
+    if (selectedDate) {
+      const selectedWeekday = getWeekdayFromDate(selectedDate);
+      if (selectedWeekday !== day) {
+        setSelectedDate(undefined);
+      }
+    }
+  };
+
+  const handleDateSelect = (date: Date | undefined) => {
+    setSelectedDate(date);
+    if (date) {
+      const weekday = getWeekdayFromDate(date);
+      if (!weekday || !availableSlots[weekday]) {
+        toast({
+          title: language === 'en' ? 'Day Not Available' : 'Dia Não Disponível',
+          description: language === 'en' 
+            ? 'This day is not available for lessons. Please select a weekday (Monday-Friday).' 
+            : 'Este dia não está disponível para aulas. Por favor, selecione um dia da semana (Segunda-Sexta).',
+          variant: "destructive",
+        });
+        setSelectedDate(undefined);
+        return;
+      }
+    }
   };
 
   const handleConfirmBooking = async () => {
@@ -70,6 +154,18 @@ const BookingPage: React.FC = () => {
         description: language === 'en' 
           ? 'Please accept the terms and conditions to proceed.' 
           : 'Por favor, aceite os termos e condições para prosseguir.',
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if slot is still available
+    if (!isTimeSlotAvailable(selectedDay, selectedTime, selectedDate)) {
+      toast({
+        title: language === 'en' ? 'Slot No Longer Available' : 'Horário Não Disponível',
+        description: language === 'en' 
+          ? 'This time slot has been booked by another user. Please select a different time.' 
+          : 'Este horário foi reservado por outro usuário. Por favor, selecione um horário diferente.',
         variant: "destructive",
       });
       return;
@@ -184,12 +280,23 @@ const BookingPage: React.FC = () => {
                       <CalendarComponent
                         mode="single"
                         selected={selectedDate}
-                        onSelect={setSelectedDate}
-                        disabled={(date) => date < new Date()}
+                        onSelect={handleDateSelect}
+                        disabled={(date) => 
+                          date < new Date() || 
+                          !isDateAvailable(date)
+                        }
                         initialFocus
+                        className="p-3 pointer-events-auto"
                       />
                     </PopoverContent>
                   </Popover>
+                  {selectedDay && !selectedDate && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {language === 'en' 
+                        ? `Showing available ${daysTranslation[selectedDay]}s` 
+                        : `Mostrando ${daysTranslation[selectedDay]}s disponíveis`}
+                    </p>
+                  )}
                 </div>
 
                 {/* Day and Time Selection */}
@@ -197,7 +304,7 @@ const BookingPage: React.FC = () => {
                   <label className="text-sm font-medium mb-2 block">
                     {language === 'en' ? 'Available Time Slots' : 'Horários Disponíveis'}
                   </label>
-                  <Tabs defaultValue="monday" onValueChange={handleTabChange}>
+                  <Tabs value={selectedDay || "monday"} onValueChange={handleTabChange}>
                     <TabsList className="grid grid-cols-5">
                       {Object.keys(availableSlots).map(day => (
                         <TabsTrigger key={day} value={day}>
@@ -209,19 +316,40 @@ const BookingPage: React.FC = () => {
                     {Object.entries(availableSlots).map(([day, slots]) => (
                       <TabsContent key={day} value={day} className="mt-6">
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                          {slots.map(slot => (
-                            <Button 
-                              key={slot} 
-                              variant={selectedTime === slot && selectedDay === day ? "default" : "outline"}
-                              className={selectedTime === slot && selectedDay === day 
-                                ? "bg-primary text-white" 
-                                : "hover:bg-primary hover:text-white transition-colors"}
-                              onClick={() => handleTimeSelect(slot)}
-                            >
-                              {slot}
-                            </Button>
-                          ))}
+                          {slots.map(slot => {
+                            const isAvailable = selectedDate ? isTimeSlotAvailable(day, slot, selectedDate) : true;
+                            const isSelected = selectedTime === slot && selectedDay === day;
+                            
+                            return (
+                              <Button 
+                                key={slot} 
+                                variant={isSelected ? "default" : "outline"}
+                                className={cn(
+                                  "relative",
+                                  isSelected && "bg-primary text-white",
+                                  !isAvailable && "opacity-50 cursor-not-allowed",
+                                  isAvailable && !isSelected && "hover:bg-primary hover:text-white transition-colors"
+                                )}
+                                onClick={() => handleTimeSelect(slot)}
+                                disabled={!isAvailable}
+                              >
+                                {slot}
+                                {!isAvailable && (
+                                  <span className="absolute inset-0 flex items-center justify-center text-xs">
+                                    {language === 'en' ? 'Booked' : 'Reservado'}
+                                  </span>
+                                )}
+                              </Button>
+                            );
+                          })}
                         </div>
+                        {selectedDate && day === selectedDay && (
+                          <p className="text-xs text-gray-500 mt-2">
+                            {language === 'en' 
+                              ? 'Gray slots are already booked and unavailable.' 
+                              : 'Horários em cinza já estão reservados e indisponíveis.'}
+                          </p>
+                        )}
                       </TabsContent>
                     ))}
                   </Tabs>
