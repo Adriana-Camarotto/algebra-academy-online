@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/lib/auth';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -11,7 +12,16 @@ import { Briefcase, Users, BookOpen, Award, CheckCircle2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ServicesPage: React.FC = () => {
-  const { language } = useAuthStore();
+  const { language, isAuthenticated } = useAuthStore();
+  const navigate = useNavigate();
+
+  const handleBookingClick = () => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: { pathname: '/booking' } } });
+    } else {
+      navigate('/booking');
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -105,7 +115,7 @@ const ServicesPage: React.FC = () => {
                   <div className="font-bold text-2xl mb-4 text-primary">
                     $60 <span className="text-sm font-normal text-gray-600">/ {t('hours', language)}</span>
                   </div>
-                  <Button className="w-full">
+                  <Button onClick={handleBookingClick} className="w-full">
                     {language === 'en' ? 'Book a Session' : 'Agendar uma Sessão'}
                   </Button>
                 </CardFooter>
@@ -149,7 +159,7 @@ const ServicesPage: React.FC = () => {
                   <div className="font-bold text-2xl mb-4 text-primary">
                     $35 <span className="text-sm font-normal text-gray-600">/ {t('hours', language)}</span>
                   </div>
-                  <Button className="w-full">
+                  <Button onClick={handleBookingClick} className="w-full">
                     {language === 'en' ? 'Join a Group' : 'Entrar em um Grupo'}
                   </Button>
                 </CardFooter>
@@ -193,7 +203,7 @@ const ServicesPage: React.FC = () => {
                   <div className="font-bold text-2xl mb-4 text-primary">
                     $75 <span className="text-sm font-normal text-gray-600">/ {t('hours', language)}</span>
                   </div>
-                  <Button className="w-full">
+                  <Button onClick={handleBookingClick} className="w-full">
                     {language === 'en' ? 'Prepare for Exam' : 'Preparar para Exame'}
                   </Button>
                 </CardFooter>
@@ -351,7 +361,12 @@ const ServicesPage: React.FC = () => {
                   ? 'Book your first session today and receive a free 30-minute consultation.'
                   : 'Agende sua primeira sessão hoje e receba uma consulta gratuita de 30 minutos.'}
               </p>
-              <Button size="lg" variant="secondary" className="px-8 py-6 text-lg">
+              <Button 
+                onClick={handleBookingClick}
+                size="lg" 
+                variant="secondary" 
+                className="px-8 py-6 text-lg"
+              >
                 {language === 'en' ? 'Get Started Now' : 'Comece Agora'}
               </Button>
             </motion.div>

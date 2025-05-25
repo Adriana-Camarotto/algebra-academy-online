@@ -1,13 +1,22 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/lib/auth';
 import { t } from '@/lib/i18n';
 import AnimatedMathBackground from './AnimatedMathBackground';
 import { motion } from 'framer-motion';
 
 const HeroSection: React.FC = () => {
-  const { language } = useAuthStore();
+  const { language, isAuthenticated } = useAuthStore();
+  const navigate = useNavigate();
+
+  const handleBookLessonClick = () => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: { pathname: '/booking' } } });
+    } else {
+      navigate('/booking');
+    }
+  };
 
   return (
     <section className="hero-section overflow-hidden">
@@ -32,12 +41,12 @@ const HeroSection: React.FC = () => {
             >
               {t('learnMore', language)}
             </Link>
-            <Link 
-              to="/booking" 
+            <button 
+              onClick={handleBookLessonClick}
               className="bg-white text-tutor-primary hover:bg-white/90 text-lg px-8 py-3 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg"
             >
               {t('bookLesson', language)}
-            </Link>
+            </button>
           </div>
         </motion.div>
       </div>

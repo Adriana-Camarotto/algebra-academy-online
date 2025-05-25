@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/lib/auth';
 import HeroSection from '@/components/HeroSection';
 import FeaturesSection from '@/components/FeaturesSection';
@@ -13,7 +14,16 @@ import MathSymbol from '@/components/MathSymbol';
 import { Link } from 'react-router-dom';
 
 const Index: React.FC = () => {
-  const { language } = useAuthStore();
+  const { language, isAuthenticated } = useAuthStore();
+  const navigate = useNavigate();
+
+  const handleBookLessonClick = () => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: { pathname: '/booking' } } });
+    } else {
+      navigate('/booking');
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -101,9 +111,12 @@ const Index: React.FC = () => {
                   ? 'Book your first session today and experience the difference personalized tutoring can make.'
                   : 'Agende sua primeira sessão hoje e experimente a diferença que a tutoria personalizada pode fazer.'}
               </p>
-              <Link to="/booking" className="btn-accent text-lg px-8 py-3">
+              <Button 
+                onClick={handleBookLessonClick}
+                className="btn-accent text-lg px-8 py-3"
+              >
                 {t('bookLesson', language)}
-              </Link>
+              </Button>
             </motion.div>
           </div>
         </section>
