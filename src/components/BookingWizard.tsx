@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '@/lib/auth';
 import { t } from '@/lib/i18n';
-import { Calendar, CalendarIcon, Clock, CreditCard, CheckCircle } from 'lucide-react';
+import { Calendar, CalendarIcon, Clock, CreditCard, CheckCircle, Repeat } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,9 +10,10 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
+import { format, addDays, startOfDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -27,6 +28,7 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
   // Wizard state
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedService, setSelectedService] = useState<string | null>(null);
+  const [lessonType, setLessonType] = useState<'single' | 'recurring' | null>(null);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
@@ -76,13 +78,18 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
     'friday': ['9:00', '11:00', '15:00'],
   };
 
-  // Mock booked slots
+  // Mock booked slots - expanded to show more realistic booking patterns
   const bookedSlots = {
     '2025-01-27': { 'monday': ['9:00', '14:00'] },
     '2025-01-28': { 'tuesday': ['11:00'] },
     '2025-01-29': { 'wednesday': ['12:00'] },
     '2025-01-30': { 'thursday': ['10:00'] },
     '2025-01-31': { 'friday': ['15:00'] },
+    '2025-02-03': { 'monday': ['10:00'] },
+    '2025-02-04': { 'tuesday': ['13:00', '16:00'] },
+    '2025-02-05': { 'wednesday': ['9:00'] },
+    '2025-02-06': { 'thursday': ['14:00'] },
+    '2025-02-07': { 'friday': ['11:00'] },
   };
 
   const daysTranslation = {
@@ -107,6 +114,20 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
     return dayMap[dayOfWeek] || null;
   };
 
+  // Check if date has any available slots
+  const hasAvailableSlots = (date: Date): boolean => {
+    const weekday = getWeekdayFromDate(date);
+    if (!weekday || !availableSlots[weekday]) return false;
+    
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const dayBookings = bookedSlots[dateStr];
+    
+    if (!dayBookings || !dayBookings[weekday]) return true;
+    
+    // Check if there are any available slots (not all are booked)
+    return availableSlots[weekday].some(slot => !dayBookings[weekday].includes(slot));
+  };
+
   // Auto-select day when date changes
   useEffect(() => {
     if (selectedDate) {
@@ -121,10 +142,13 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
     }
   }, [selectedDate]);
 
-  // Filter calendar to show only available weekdays
+  // Filter calendar to show only dates with available slots
   const isDateAvailable = (date: Date): boolean => {
-    const weekday = getWeekdayFromDate(date);
-    return weekday ? !!availableSlots[weekday] : false;
+    // Don't allow past dates
+    if (date < startOfDay(new Date())) return false;
+    
+    // Check if date has available slots
+    return hasAvailableSlots(date);
   };
 
   // Check if time slot is available (not booked)
@@ -158,30 +182,39 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
   };
 
   const handleDateSelect = (date: Date | undefined) => {
-    setSelectedDate(date);
-    if (date) {
-      const weekday = getWeekdayFromDate(date);
-      if (!weekday || !availableSlots[weekday]) {
-        toast({
-          title: language === 'en' ? 'Day Not Available' : 'Dia Não Disponível',
-          description: language === 'en' 
-            ? 'This day is not available for lessons. Please select a weekday (Monday-Friday).' 
-            : 'Este dia não está disponível para aulas. Por favor, selecione um dia da semana (Segunda-Sexta).',
-          variant: "destructive",
-        });
-        setSelectedDate(undefined);
-        return;
-      }
+    if (!date) {
+      setSelectedDate(undefined);
+      return;
     }
+
+    // Check if date is available
+    if (!isDateAvailable(date)) {
+      toast({
+        title: language === 'en' ? 'Date Not Available' : 'Data Não Disponível',
+        description: language === 'en' 
+          ? 'This date has no available time slots. Please select a different date.' 
+          : 'Esta data não tem horários disponíveis. Por favor, selecione uma data diferente.',
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSelectedDate(date);
+  };
+
+  const handleServiceSelect = (serviceId: string) => {
+    setSelectedService(serviceId);
+    // Reset lesson type when changing service
+    setLessonType(null);
   };
 
   const handleNextStep = () => {
-    if (currentStep === 1 && !selectedService) {
+    if (currentStep === 1 && (!selectedService || (selectedService === 'individual' && !lessonType))) {
       toast({
-        title: language === 'en' ? 'Service Required' : 'Serviço Obrigatório',
+        title: language === 'en' ? 'Selection Required' : 'Seleção Obrigatória',
         description: language === 'en' 
-          ? 'Please select a service to continue.' 
-          : 'Por favor, selecione um serviço para continuar.',
+          ? 'Please select a service and lesson type to continue.' 
+          : 'Por favor, selecione um serviço e tipo de aula para continuar.',
         variant: "destructive",
       });
       return;
@@ -225,13 +258,16 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
 
     try {
       const selectedServiceData = services.find(s => s.id === selectedService);
+      const baseAmount = selectedService === 'individual' ? 6000 : selectedService === 'group' ? 4000 : 8000;
+      
       const { data, error } = await supabase.functions.invoke('create-payment', {
         body: {
-          amount: 6000, // $60.00 in cents
+          amount: baseAmount,
           currency: 'usd',
           product_name: selectedServiceData?.name || 'Math Tutoring Lesson',
           booking_details: {
             service: selectedService,
+            lesson_type: lessonType,
             date: format(selectedDate!, 'yyyy-MM-dd'),
             day: selectedDay,
             time: selectedTime,
@@ -332,42 +368,94 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
             <CardContent>
               <div className="grid gap-4">
                 {services.map((service) => (
-                  <div
-                    key={service.id}
-                    onClick={() => setSelectedService(service.id)}
-                    className={cn(
-                      "p-4 border rounded-lg cursor-pointer transition-all hover:border-primary",
-                      selectedService === service.id
-                        ? "border-primary bg-primary/5"
-                        : "border-gray-200"
-                    )}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-3">
-                        <div className="text-primary mt-1">
-                          {service.icon}
+                  <div key={service.id}>
+                    <div
+                      onClick={() => handleServiceSelect(service.id)}
+                      className={cn(
+                        "p-4 border rounded-lg cursor-pointer transition-all hover:border-primary",
+                        selectedService === service.id
+                          ? "border-primary bg-primary/5"
+                          : "border-gray-200"
+                      )}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3">
+                          <div className="text-primary mt-1">
+                            {service.icon}
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-lg">{service.name}</h3>
+                            <p className="text-gray-600 text-sm mb-2">{service.description}</p>
+                            <div className="flex items-center gap-4 text-sm text-gray-500">
+                              <span>{service.duration}</span>
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="font-semibold text-lg">{service.name}</h3>
-                          <p className="text-gray-600 text-sm mb-2">{service.description}</p>
-                          <div className="flex items-center gap-4 text-sm text-gray-500">
-                            <span>{service.duration}</span>
+                        <div className="text-right">
+                          <p className="text-2xl font-bold text-primary">{service.price}</p>
+                          <p className="text-sm text-gray-500">
+                            {language === 'en' ? 'per session' : 'por sessão'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Lesson Type Selection for Individual Tutoring */}
+                    {selectedService === 'individual' && service.id === 'individual' && (
+                      <div className="mt-4 ml-4 p-4 bg-gray-50 rounded-lg">
+                        <h4 className="font-medium mb-3 flex items-center gap-2">
+                          <Repeat className="h-4 w-4" />
+                          {language === 'en' ? 'Lesson Type' : 'Tipo de Aula'}
+                        </h4>
+                        <div className="space-y-2">
+                          <div
+                            onClick={() => setLessonType('single')}
+                            className={cn(
+                              "p-3 border rounded cursor-pointer transition-all",
+                              lessonType === 'single'
+                                ? "border-primary bg-primary/10"
+                                : "border-gray-200 hover:border-gray-300"
+                            )}
+                          >
+                            <div className="font-medium">
+                              {language === 'en' ? 'Single Lesson' : 'Aula Única'}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              {language === 'en' 
+                                ? 'One-time lesson with immediate payment' 
+                                : 'Aula única com pagamento imediato'}
+                            </div>
+                          </div>
+                          <div
+                            onClick={() => setLessonType('recurring')}
+                            className={cn(
+                              "p-3 border rounded cursor-pointer transition-all",
+                              lessonType === 'recurring'
+                                ? "border-primary bg-primary/10"
+                                : "border-gray-200 hover:border-gray-300"
+                            )}
+                          >
+                            <div className="font-medium">
+                              {language === 'en' ? 'Recurring Lessons' : 'Aulas Recorrentes'}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              {language === 'en' 
+                                ? 'Weekly lessons on the same day and time. First payment now, subsequent payments automatic.' 
+                                : 'Aulas semanais no mesmo dia e horário. Primeiro pagamento agora, pagamentos seguintes automáticos.'}
+                            </div>
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-primary">{service.price}</p>
-                        <p className="text-sm text-gray-500">
-                          {language === 'en' ? 'per session' : 'por sessão'}
-                        </p>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 ))}
               </div>
             </CardContent>
             <CardFooter className="flex justify-end">
-              <Button onClick={handleNextStep} disabled={!selectedService}>
+              <Button 
+                onClick={handleNextStep} 
+                disabled={!selectedService || (selectedService === 'individual' && !lessonType)}
+              >
                 {language === 'en' ? 'Continue' : 'Continuar'}
               </Button>
             </CardFooter>
@@ -384,8 +472,8 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
               </CardTitle>
               <CardDescription>
                 {language === 'en' 
-                  ? 'Choose your preferred date, day and time' 
-                  : 'Escolha sua data, dia e horário preferido'}
+                  ? 'Choose your preferred date and time. Only dates with available slots are shown.' 
+                  : 'Escolha sua data e horário preferido. Apenas datas com horários disponíveis são mostradas.'}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -416,12 +504,19 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
                       mode="single"
                       selected={selectedDate}
                       onSelect={handleDateSelect}
-                      disabled={(date) => 
-                        date < new Date() || 
-                        !isDateAvailable(date)
-                      }
+                      disabled={(date) => !isDateAvailable(date)}
                       initialFocus
                       className="p-3 pointer-events-auto"
+                      modifiers={{
+                        available: (date) => isDateAvailable(date)
+                      }}
+                      modifiersStyles={{
+                        available: { 
+                          backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                          borderColor: 'rgb(34, 197, 94)',
+                          color: 'rgb(34, 197, 94)'
+                        }
+                      }}
                     />
                   </PopoverContent>
                 </Popover>
@@ -455,7 +550,7 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
                               className={cn(
                                 "relative",
                                 isSelected && "bg-primary text-white",
-                                !isAvailable && "opacity-50 cursor-not-allowed",
+                                !isAvailable && "opacity-50 cursor-not-allowed bg-red-100 text-red-600 border-red-200",
                                 isAvailable && !isSelected && "hover:bg-primary hover:text-white transition-colors"
                               )}
                               onClick={() => handleTimeSelect(slot)}
@@ -463,7 +558,7 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
                             >
                               {slot}
                               {!isAvailable && (
-                                <span className="absolute inset-0 flex items-center justify-center text-xs">
+                                <span className="absolute inset-0 flex items-center justify-center text-xs font-medium">
                                   {language === 'en' ? 'Booked' : 'Reservado'}
                                 </span>
                               )}
@@ -505,6 +600,18 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
                     {services.find(s => s.id === selectedService)?.name}
                   </p>
                 </div>
+                {selectedService === 'individual' && lessonType && (
+                  <div>
+                    <p className="text-sm text-gray-500">
+                      {language === 'en' ? 'Lesson Type' : 'Tipo de Aula'}:
+                    </p>
+                    <p className="font-medium">
+                      {lessonType === 'single' 
+                        ? (language === 'en' ? 'Single Lesson' : 'Aula Única')
+                        : (language === 'en' ? 'Recurring Lessons' : 'Aulas Recorrentes')}
+                    </p>
+                  </div>
+                )}
                 <div>
                   <p className="text-sm text-gray-500">
                     {language === 'en' ? 'Duration' : 'Duração'}:
@@ -532,6 +639,13 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
                     {language === 'en' ? 'Price' : 'Preço'}:
                   </p>
                   <p className="font-medium">{services.find(s => s.id === selectedService)?.price}</p>
+                  {lessonType === 'recurring' && (
+                    <p className="text-xs text-amber-600">
+                      {language === 'en' 
+                        ? 'First payment now, then weekly automatically'
+                        : 'Primeiro pagamento agora, depois semanalmente automaticamente'}
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>

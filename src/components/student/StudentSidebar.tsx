@@ -1,94 +1,108 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuthStore, hasRole } from '@/lib/auth';
-import { t } from '@/lib/i18n';
-import {
-  LayoutDashboard,
+import { Link, useLocation } from 'react-router-dom';
+import { useAuthStore } from '@/lib/auth';
+import { 
+  Home, 
+  User, 
+  BookOpen, 
+  TrendingUp, 
   Calendar,
-  History,
-  ChartBar,
-  MessageSquare,
-  FileText,
   Settings,
+  LogOut
 } from 'lucide-react';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from '@/components/ui/sidebar';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
-const StudentSidebar = () => {
-  const { language } = useAuthStore();
-  const navigate = useNavigate();
+const StudentSidebar: React.FC = () => {
+  const { user, logout, language } = useAuthStore();
+  const location = useLocation();
 
   const menuItems = [
     {
-      title: t('dashboard', language),
-      icon: LayoutDashboard,
-      path: '/student',
+      icon: Home,
+      label: language === 'en' ? 'Dashboard' : 'Painel',
+      href: '/student',
+      active: location.pathname === '/student'
     },
     {
-      title: t('myLessons', language),
       icon: Calendar,
-      path: '/student/schedule',
+      label: language === 'en' ? 'My Bookings' : 'Meus Agendamentos',
+      href: '/student/bookings',
+      active: location.pathname === '/student/bookings'
     },
     {
-      title: t('myLessons', language) + ' ' + t('history', language),
-      icon: History,
-      path: '/student/history',
+      icon: BookOpen,
+      label: language === 'en' ? 'Lesson History' : 'Histórico de Aulas',
+      href: '/student/history',
+      active: location.pathname === '/student/history'
     },
     {
-      title: t('progress', language),
-      icon: ChartBar,
-      path: '/student/progress',
-    },
-    {
-      title: t('feedback', language),
-      icon: MessageSquare,
-      path: '/student/feedback',
-    },
-    {
-      title: t('resources', language),
-      icon: FileText,
-      path: '/student/resources',
-    },
-    {
-      title: t('settings', language),
-      icon: Settings,
-      path: '/student/settings',
-    },
+      icon: TrendingUp,
+      label: language === 'en' ? 'Progress' : 'Progresso',
+      href: '/student/progress',
+      active: location.pathname === '/student/progress'
+    }
   ];
 
   return (
-    <Sidebar>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>
-            {language === 'en' ? 'Student Portal' : 'Portal do Aluno'}
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.path}>
-                  <SidebarMenuButton asChild onClick={() => navigate(item.path)}>
-                    <div className="flex items-center cursor-pointer">
-                      <item.icon className="mr-2 h-5 w-5" />
-                      <span>{item.title}</span>
-                    </div>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
+    <div className="w-64 bg-white shadow-lg border-r">
+      {/* User Profile Section */}
+      <div className="p-6 border-b">
+        <div className="flex items-center space-x-3">
+          {user?.avatar && (
+            <img
+              src={user.avatar}
+              alt={user.name}
+              className="w-10 h-10 rounded-full"
+            />
+          )}
+          <div>
+            <h3 className="font-semibold text-gray-900">{user?.name}</h3>
+            <p className="text-sm text-gray-500">
+              {language === 'en' ? 'Student' : 'Estudante'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Menu */}
+      <nav className="p-4">
+        <ul className="space-y-2">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <li key={item.href}>
+                <Link
+                  to={item.href}
+                  className={cn(
+                    "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                    item.active
+                      ? "bg-primary text-white"
+                      : "text-gray-700 hover:bg-gray-100"
+                  )}
+                >
+                  <Icon className="w-5 h-5" />
+                  <span>{item.label}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+
+      {/* Bottom Actions */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-white">
+        <Button
+          variant="ghost"
+          onClick={logout}
+          className="w-full justify-start text-gray-700 hover:text-red-600 hover:bg-red-50"
+        >
+          <LogOut className="w-5 h-5 mr-3" />
+          {language === 'en' ? 'Sign Out' : 'Sair'}
+        </Button>
+      </div>
+    </div>
   );
 };
 

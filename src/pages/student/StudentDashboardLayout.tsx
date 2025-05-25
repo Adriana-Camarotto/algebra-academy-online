@@ -1,63 +1,42 @@
 
 import React from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
-import { useAuthStore, hasRole } from '@/lib/auth';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { Outlet } from 'react-router-dom';
+import { useAuthStore } from '@/lib/auth';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import StudentSidebar from '@/components/student/StudentSidebar';
-import { Button } from '@/components/ui/button';
-import { Menu } from 'lucide-react';
-import LanguageSelector from '@/components/LanguageSelector';
 
-const StudentDashboardLayout = () => {
-  const { user, isAuthenticated, language } = useAuthStore();
-  const navigate = useNavigate();
+const StudentDashboardLayout: React.FC = () => {
+  const { user } = useAuthStore();
 
-  React.useEffect(() => {
-    if (!isAuthenticated || (user && !hasRole(user, ['student', 'parent']))) {
-      navigate('/login');
-    }
-  }, [isAuthenticated, user, navigate]);
-
-  if (!isAuthenticated || (user && !hasRole(user, ['student', 'parent']))) {
-    return null;
+  // Redirect if not a student
+  if (!user || user.role !== 'student') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
+          <p className="text-gray-600">This area is only accessible to students.</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gray-50">
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      
+      <div className="flex-1 flex">
         <StudentSidebar />
         
-        <div className="flex-1 flex flex-col">
-          <header className="bg-white shadow-sm border-b border-gray-200 h-16 flex items-center px-4">
-            <SidebarTrigger>
-              <Button variant="ghost" size="icon" className="md:hidden">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SidebarTrigger>
-            
-            <div className="flex-1" />
-            
-            <div className="flex items-center space-x-4">
-              <LanguageSelector />
-              <div className="flex items-center gap-3">
-                {user?.avatar && (
-                  <img 
-                    src={user.avatar} 
-                    alt={user.name} 
-                    className="w-8 h-8 rounded-full"
-                  />
-                )}
-                <span className="font-medium hidden md:inline">{user?.name}</span>
-              </div>
-            </div>
-          </header>
-          
-          <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
+        <main className="flex-1 p-6 bg-gray-50">
+          <div className="max-w-7xl mx-auto">
             <Outlet />
-          </main>
-        </div>
+          </div>
+        </main>
       </div>
-    </SidebarProvider>
+      
+      <Footer />
+    </div>
   );
 };
 

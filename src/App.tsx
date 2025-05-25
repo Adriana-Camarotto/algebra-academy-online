@@ -18,6 +18,7 @@ import BookingPage from "./pages/BookingPage";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import StudentDashboardLayout from "./pages/student/StudentDashboardLayout";
 import StudentDashboardPage from "./pages/student/StudentDashboardPage";
+import StudentBookingsPage from "./pages/student/StudentBookingsPage";
 import StudentHistoryPage from "./pages/student/StudentHistoryPage";
 import StudentProgressPage from "./pages/student/StudentProgressPage";
 
@@ -45,6 +46,7 @@ const App = () => (
           {/* Student Dashboard Routes */}
           <Route path="/student" element={<StudentDashboardLayout />}>
             <Route index element={<StudentDashboardPage />} />
+            <Route path="bookings" element={<StudentBookingsPage />} />
             <Route path="history" element={<StudentHistoryPage />} />
             <Route path="progress" element={<StudentProgressPage />} />
             {/* Additional student routes will be added here later */}
