@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '@/lib/auth';
 import { t } from '@/lib/i18n';
-import { Calendar, CalendarIcon, Clock, CreditCard, CheckCircle, Repeat } from 'lucide-react';
+import { Calendar, CalendarIcon, Clock, CreditCard, CheckCircle, Repeat, Users } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,7 +10,8 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { format, addDays, startOfDay } from 'date-fns';
@@ -22,7 +23,7 @@ interface BookingWizardProps {
 }
 
 const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
-  const { language } = useAuthStore();
+  const { language, user } = useAuthStore();
   const { toast } = useToast();
   
   // Wizard state
@@ -34,8 +35,22 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Parent booking state
+  const [showStudentEmailDialog, setShowStudentEmailDialog] = useState(false);
+  const [studentEmail, setStudentEmail] = useState('');
 
-  // Services data
+  // Mock data for group session availability (6 classes per session)
+  const groupSessionSpots = {
+    'monday-9:00': { available: 2, total: 4 },
+    'monday-14:00': { available: 1, total: 4 },
+    'tuesday-11:00': { available: 3, total: 4 },
+    'wednesday-17:00': { available: 4, total: 4 },
+    'thursday-16:00': { available: 0, total: 4 },
+    'friday-15:00': { available: 2, total: 4 },
+  };
+
+  // Services data - updated durations to 60 minutes
   const services = [
     {
       id: 'individual',
@@ -51,11 +66,11 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
       id: 'group',
       name: language === 'en' ? 'Group Sessions' : 'Sessões em Grupo',
       description: language === 'en' 
-        ? 'Small group math tutoring sessions (2-4 students)' 
-        : 'Sessões de tutoria de matemática em pequenos grupos (2-4 alunos)',
+        ? 'Small group math tutoring sessions (2-4 students) - 6 classes total' 
+        : 'Sessões de tutoria de matemática em pequenos grupos (2-4 alunos) - 6 aulas no total',
       price: '$40',
-      duration: '90 min',
-      icon: <CheckCircle className="h-6 w-6" />
+      duration: '60 min',
+      icon: <Users className="h-6 w-6" />
     },
     {
       id: 'exam-prep',
@@ -64,12 +79,12 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
         ? 'Intensive exam preparation sessions' 
         : 'Sessões intensivas de preparação para exames',
       price: '$80',
-      duration: '90 min',
+      duration: '60 min',
       icon: <CreditCard className="h-6 w-6" />
     }
   ];
 
-  // Mock data for available time slots
+  // Available time slots
   const availableSlots = {
     'monday': ['9:00', '10:00', '14:00', '15:00'],
     'tuesday': ['11:00', '13:00', '16:00'],
@@ -78,7 +93,7 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
     'friday': ['9:00', '11:00', '15:00'],
   };
 
-  // Mock booked slots - expanded to show more realistic booking patterns
+  // Mock booked slots
   const bookedSlots = {
     '2025-01-27': { 'monday': ['9:00', '14:00'] },
     '2025-01-28': { 'tuesday': ['11:00'] },
@@ -124,7 +139,6 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
     
     if (!dayBookings || !dayBookings[weekday]) return true;
     
-    // Check if there are any available slots (not all are booked)
     return availableSlots[weekday].some(slot => !dayBookings[weekday].includes(slot));
   };
 
@@ -144,16 +158,20 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
 
   // Filter calendar to show only dates with available slots
   const isDateAvailable = (date: Date): boolean => {
-    // Don't allow past dates
     if (date < startOfDay(new Date())) return false;
-    
-    // Check if date has available slots
     return hasAvailableSlots(date);
   };
 
-  // Check if time slot is available (not booked)
+  // Check if time slot is available
   const isTimeSlotAvailable = (day: string, time: string, date: Date): boolean => {
     if (!date) return true;
+    
+    // For group sessions, check if there are available spots
+    if (selectedService === 'group') {
+      const slotKey = `${day}-${time}`;
+      const spotInfo = groupSessionSpots[slotKey];
+      if (spotInfo && spotInfo.available === 0) return false;
+    }
     
     const dateStr = format(date, 'yyyy-MM-dd');
     const dayBookings = bookedSlots[dateStr];
@@ -187,7 +205,6 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
       return;
     }
 
-    // Check if date is available
     if (!isDateAvailable(date)) {
       toast({
         title: language === 'en' ? 'Date Not Available' : 'Data Não Disponível',
@@ -204,7 +221,6 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
 
   const handleServiceSelect = (serviceId: string) => {
     setSelectedService(serviceId);
-    // Reset lesson type when changing service
     setLessonType(null);
   };
 
@@ -254,6 +270,32 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
       return;
     }
 
+    // Check if user is a parent and needs to provide student email
+    if (user?.role === 'parent') {
+      setShowStudentEmailDialog(true);
+      return;
+    }
+
+    await processBooking();
+  };
+
+  const handleStudentEmailSubmit = async () => {
+    if (!studentEmail.trim()) {
+      toast({
+        title: language === 'en' ? 'Email Required' : 'Email Obrigatório',
+        description: language === 'en' 
+          ? 'Please enter the student\'s email address.' 
+          : 'Por favor, insira o endereço de email do aluno.',
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setShowStudentEmailDialog(false);
+    await processBooking(studentEmail);
+  };
+
+  const processBooking = async (studentEmailForParent?: string) => {
     setIsProcessing(true);
 
     try {
@@ -271,6 +313,8 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
             date: format(selectedDate!, 'yyyy-MM-dd'),
             day: selectedDay,
             time: selectedTime,
+            student_email: studentEmailForParent,
+            booked_by_parent: !!studentEmailForParent,
           }
         }
       });
@@ -538,31 +582,42 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
                   
                   {Object.entries(availableSlots).map(([day, slots]) => (
                     <TabsContent key={day} value={day} className="mt-6">
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {slots.map(slot => {
                           const isAvailable = selectedDate ? isTimeSlotAvailable(day, slot, selectedDate) : true;
                           const isSelected = selectedTime === slot && selectedDay === day;
+                          const slotKey = `${day}-${slot}`;
+                          const spotInfo = selectedService === 'group' ? groupSessionSpots[slotKey] : null;
                           
                           return (
-                            <Button 
-                              key={slot} 
-                              variant={isSelected ? "default" : "outline"}
-                              className={cn(
-                                "relative",
-                                isSelected && "bg-primary text-white",
-                                !isAvailable && "opacity-50 cursor-not-allowed bg-red-100 text-red-600 border-red-200",
-                                isAvailable && !isSelected && "hover:bg-primary hover:text-white transition-colors"
-                              )}
-                              onClick={() => handleTimeSelect(slot)}
-                              disabled={!isAvailable}
-                            >
-                              {slot}
-                              {!isAvailable && (
-                                <span className="absolute inset-0 flex items-center justify-center text-xs font-medium">
-                                  {language === 'en' ? 'Booked' : 'Reservado'}
-                                </span>
-                              )}
-                            </Button>
+                            <div key={slot} className="relative">
+                              <Button 
+                                variant={isSelected ? "default" : "outline"}
+                                className={cn(
+                                  "w-full h-auto p-3 flex flex-col items-center gap-1",
+                                  isSelected && "bg-primary text-white",
+                                  !isAvailable && "opacity-50 cursor-not-allowed bg-red-100 text-red-600 border-red-200",
+                                  isAvailable && !isSelected && "hover:bg-primary hover:text-white transition-colors"
+                                )}
+                                onClick={() => handleTimeSelect(slot)}
+                                disabled={!isAvailable}
+                              >
+                                <span className="font-medium">{slot}</span>
+                                {selectedService === 'group' && spotInfo && (
+                                  <span className={cn(
+                                    "text-xs",
+                                    spotInfo.available === 0 ? "text-red-600" : "text-green-600"
+                                  )}>
+                                    {spotInfo.available}/{spotInfo.total} {language === 'en' ? 'spots' : 'vagas'}
+                                  </span>
+                                )}
+                                {!isAvailable && (
+                                  <span className="text-xs">
+                                    {language === 'en' ? 'Booked' : 'Reservado'}
+                                  </span>
+                                )}
+                              </Button>
+                            </div>
                           );
                         })}
                       </div>
@@ -599,6 +654,11 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
                   <p className="font-medium">
                     {services.find(s => s.id === selectedService)?.name}
                   </p>
+                  {selectedService === 'group' && (
+                    <p className="text-xs text-blue-600">
+                      {language === 'en' ? '6 classes total, 60 minutes each' : '6 aulas no total, 60 minutos cada'}
+                    </p>
+                  )}
                 </div>
                 {selectedService === 'individual' && lessonType && (
                   <div>
@@ -716,6 +776,44 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
           </div>
         )}
       </motion.div>
+
+      {/* Student Email Dialog for Parents */}
+      <Dialog open={showStudentEmailDialog} onOpenChange={setShowStudentEmailDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {language === 'en' ? 'Student Information' : 'Informações do Aluno'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              {language === 'en'
+                ? 'Since you are booking as a parent, please provide the student\'s email address. This must match the email the student used to register.'
+                : 'Como você está fazendo a reserva como responsável, forneça o endereço de email do aluno. Este deve corresponder ao email que o aluno usou para se registrar.'}
+            </p>
+            <div>
+              <Label htmlFor="student-email">
+                {language === 'en' ? 'Student Email' : 'Email do Aluno'}
+              </Label>
+              <Input
+                id="student-email"
+                type="email"
+                value={studentEmail}
+                onChange={(e) => setStudentEmail(e.target.value)}
+                placeholder={language === 'en' ? 'student@example.com' : 'aluno@exemplo.com'}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowStudentEmailDialog(false)}>
+              {language === 'en' ? 'Cancel' : 'Cancelar'}
+            </Button>
+            <Button onClick={handleStudentEmailSubmit}>
+              {language === 'en' ? 'Continue' : 'Continuar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

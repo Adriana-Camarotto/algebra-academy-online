@@ -74,6 +74,18 @@ const FeaturesSection: React.FC = () => {
               <div className="text-tutor-primary mb-4">{feature.icon}</div>
               <h3 className="text-xl font-bold mb-2">{t(feature.name as any, language)}</h3>
               <p className="text-gray-600">{t(feature.description as any, language)}</p>
+              {/* Add duration info */}
+              <div className="mt-3 text-sm text-gray-500">
+                {feature.name === 'service1' && (
+                  <span>{language === 'en' ? '60 minutes per session' : '60 minutos por sessão'}</span>
+                )}
+                {feature.name === 'service2' && (
+                  <span>{language === 'en' ? '60 minutes per class, 6 classes total' : '60 minutos por aula, 6 aulas no total'}</span>
+                )}
+                {feature.name === 'service3' && (
+                  <span>{language === 'en' ? '60 minutes per session' : '60 minutos por sessão'}</span>
+                )}
+              </div>
             </motion.div>
           ))}
         </div>
