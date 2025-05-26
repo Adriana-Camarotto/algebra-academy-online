@@ -11,15 +11,6 @@ const Header: React.FC = () => {
   const { user, isAuthenticated, logout, language } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
-
-  const handleBookLessonClick = () => {
-    if (!isAuthenticated) {
-      // Store the intended destination before redirecting to login
-      navigate('/login', { state: { from: { pathname: '/booking' } } });
-    } else {
-      navigate('/booking');
-    }
-  };
   
   return (
     <header className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-md shadow-sm">
@@ -37,9 +28,6 @@ const Header: React.FC = () => {
             <Link to="/about" className="nav-link">{t('aboutTitle', language)}</Link>
             <Link to="/services" className="nav-link">{t('servicesTitle', language)}</Link>
             <Link to="/contact" className="nav-link">{t('contact', language)}</Link>
-            <Button onClick={handleBookLessonClick} className="btn-primary">
-              {language === 'en' ? 'Book a Lesson' : 'Agendar Aula'}
-            </Button>
             <LanguageSelector />
             
             {isAuthenticated ? (
@@ -116,16 +104,6 @@ const Header: React.FC = () => {
             >
               {t('contact', language)}
             </Link>
-            
-            <Button 
-              onClick={() => {
-                handleBookLessonClick();
-                setMobileMenuOpen(false);
-              }} 
-              className="w-full mb-2 bg-primary text-white"
-            >
-              {language === 'en' ? 'Book a Lesson' : 'Agendar Aula'}
-            </Button>
             
             {isAuthenticated ? (
               <>
