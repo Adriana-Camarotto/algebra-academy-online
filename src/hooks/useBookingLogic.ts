@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { format, startOfDay } from 'date-fns';
@@ -131,20 +130,20 @@ export const useBookingLogic = (language: string, user: any) => {
 
     try {
       const services = [
-        { id: 'individual', price: 6000 },
-        { id: 'group', price: 4000 },
-        { id: 'exam-prep', price: 8000 }
+        { id: 'individual', price: 1 }, // £0.01 = 1 pence
+        { id: 'group', price: 1 },      // £0.01 = 1 pence
+        { id: 'exam-prep', price: 1 }   // £0.01 = 1 pence
       ];
 
       const selectedServiceData = services.find(s => s.id === selectedService);
-      const baseAmount = selectedServiceData?.price || 6000;
+      const baseAmount = selectedServiceData?.price || 1;
       
       console.log('Processing booking with student email:', studentEmailForParent);
       
       const { data, error } = await supabase.functions.invoke('create-payment', {
         body: {
           amount: baseAmount,
-          currency: 'usd',
+          currency: 'gbp', // Changed to GBP for British pounds
           product_name: `Math Tutoring - ${selectedService}`,
           booking_details: {
             service: selectedService,

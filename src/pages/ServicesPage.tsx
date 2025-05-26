@@ -113,7 +113,7 @@ const ServicesPage: React.FC = () => {
                 </CardContent>
                 <CardFooter className="flex-col items-start">
                   <div className="font-bold text-2xl mb-4 text-primary">
-                    $60 <span className="text-sm font-normal text-gray-600">/ {t('hours', language)}</span>
+                    £0.01 <span className="text-sm font-normal text-gray-600">/ {t('hours', language)}</span>
                   </div>
                   <Button onClick={handleBookingClick} className="w-full">
                     {language === 'en' ? 'Book a Session' : 'Agendar uma Sessão'}
@@ -157,7 +157,7 @@ const ServicesPage: React.FC = () => {
                 </CardContent>
                 <CardFooter className="flex-col items-start">
                   <div className="font-bold text-2xl mb-4 text-primary">
-                    $35 <span className="text-sm font-normal text-gray-600">/ {t('hours', language)}</span>
+                    £0.01 <span className="text-sm font-normal text-gray-600">/ {t('hours', language)}</span>
                   </div>
                   <Button onClick={handleBookingClick} className="w-full">
                     {language === 'en' ? 'Join a Group' : 'Entrar em um Grupo'}
@@ -201,7 +201,7 @@ const ServicesPage: React.FC = () => {
                 </CardContent>
                 <CardFooter className="flex-col items-start">
                   <div className="font-bold text-2xl mb-4 text-primary">
-                    $75 <span className="text-sm font-normal text-gray-600">/ {t('hours', language)}</span>
+                    £0.01 <span className="text-sm font-normal text-gray-600">/ {t('hours', language)}</span>
                   </div>
                   <Button onClick={handleBookingClick} className="w-full">
                     {language === 'en' ? 'Prepare for Exam' : 'Preparar para Exame'}

@@ -18,7 +18,7 @@ serve(async (req) => {
     console.log("Starting payment creation process");
 
     // Get request body
-    const { amount, currency = 'usd', product_name, booking_details } = await req.json();
+    const { amount, currency = 'gbp', product_name, booking_details } = await req.json();
     console.log("Request data:", { amount, currency, product_name, booking_details });
 
     // Retrieve authenticated user (optional for one-time payments)
