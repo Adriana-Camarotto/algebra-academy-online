@@ -87,7 +87,7 @@ const AboutPage: React.FC = () => {
                 
                 <p className="text-lg text-gray-700 mb-6">
                   {language === 'en' 
-                    ? 'Hello! My name is Dr. Sarah Johnson, and I am a passionate mathematics tutor with over a decade of experience teaching students from elementary school to university level.' 
+                    ? '5555Hello! My name is Dr. Sarah Johnson, and I am a passionate mathematics tutor with over a decade of experience teaching students from elementary school to university level.' 
                     : 'Olá! Meu nome é Dra. Sarah Johnson e sou uma tutora de matemática apaixonada com mais de uma década de experiência ensinando alunos do ensino fundamental ao universitário.'}
                 </p>
                 
