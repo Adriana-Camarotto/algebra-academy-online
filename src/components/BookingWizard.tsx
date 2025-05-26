@@ -41,7 +41,8 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
     setStudentEmail,
     isDateAvailable,
     isTimeSlotAvailable,
-    processBooking,
+    handleConfirmBooking,
+    handleStudentEmailSubmit,
     toast
   } = useBookingLogic(language, user);
 
@@ -175,43 +176,6 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
-  };
-
-  const handleConfirmBooking = async () => {
-    if (!termsAccepted) {
-      toast({
-        title: language === 'en' ? 'Terms Required' : 'Termos Obrigatórios',
-        description: language === 'en' 
-          ? 'Please accept the terms and conditions to proceed.' 
-          : 'Por favor, aceite os termos e condições para prosseguir.',
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Check if user is a parent and needs to provide student email
-    if (user?.role === 'parent') {
-      setShowStudentEmailDialog(true);
-      return;
-    }
-
-    await processBooking();
-  };
-
-  const handleStudentEmailSubmit = async () => {
-    if (!studentEmail.trim()) {
-      toast({
-        title: language === 'en' ? 'Email Required' : 'Email Obrigatório',
-        description: language === 'en' 
-          ? 'Please enter the student\'s email address.' 
-          : 'Por favor, insira o endereço de email do aluno.',
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setShowStudentEmailDialog(false);
-    await processBooking(studentEmail);
   };
 
   return (

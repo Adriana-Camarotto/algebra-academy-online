@@ -68,6 +68,13 @@ export const mockUsers: Record<string, User> = {
     role: 'parent',
     avatar: 'https://ui-avatars.com/api/?name=Bob+Parent&background=7e57c2&color=fff',
   },
+  parent2: {
+    id: 'parent2',
+    name: 'Maria Responsável',
+    email: 'maria@example.com',
+    role: 'parent',
+    avatar: 'https://ui-avatars.com/api/?name=Maria+Responsável&background=7e57c2&color=fff',
+  },
   tutor1: {
     id: 'tutor1',
     name: 'Carol Tutor',

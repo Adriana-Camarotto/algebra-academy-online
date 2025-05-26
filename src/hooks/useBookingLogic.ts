@@ -120,6 +120,12 @@ export const useBookingLogic = (language: string, user: any) => {
     return !dayBookings[day].includes(time);
   };
 
+  // Check if user is a parent
+  const isParentUser = (user: any): boolean => {
+    console.log('Checking if user is parent:', user);
+    return user && user.role === 'parent';
+  };
+
   const processBooking = async (studentEmailForParent?: string) => {
     setIsProcessing(true);
 
@@ -132,6 +138,8 @@ export const useBookingLogic = (language: string, user: any) => {
 
       const selectedServiceData = services.find(s => s.id === selectedService);
       const baseAmount = selectedServiceData?.price || 6000;
+      
+      console.log('Processing booking with student email:', studentEmailForParent);
       
       const { data, error } = await supabase.functions.invoke('create-payment', {
         body: {
@@ -179,6 +187,37 @@ export const useBookingLogic = (language: string, user: any) => {
     }
   };
 
+  const handleConfirmBooking = async () => {
+    console.log('Confirm booking clicked, user:', user);
+    
+    // Check if user is a parent and needs to provide student email
+    if (isParentUser(user)) {
+      console.log('User is parent, showing student email dialog');
+      setShowStudentEmailDialog(true);
+      return;
+    }
+
+    console.log('User is not parent, proceeding with normal booking');
+    await processBooking();
+  };
+
+  const handleStudentEmailSubmit = async () => {
+    if (!studentEmail.trim()) {
+      toast({
+        title: language === 'en' ? 'Email Required' : 'Email Obrigatório',
+        description: language === 'en' 
+          ? 'Please enter the student\'s email address.' 
+          : 'Por favor, insira o endereço de email do aluno.',
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log('Student email submitted:', studentEmail);
+    setShowStudentEmailDialog(false);
+    await processBooking(studentEmail);
+  };
+
   return {
     // State
     currentStep,
@@ -210,6 +249,8 @@ export const useBookingLogic = (language: string, user: any) => {
     isDateAvailable,
     isTimeSlotAvailable,
     processBooking,
+    handleConfirmBooking,
+    handleStudentEmailSubmit,
     toast
   };
 };
