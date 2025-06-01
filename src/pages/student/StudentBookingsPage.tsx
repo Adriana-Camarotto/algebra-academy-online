@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '@/lib/auth';
 import { 
   Card, 
@@ -29,56 +29,70 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Trash2, Calendar, Clock, DollarSign, Repeat } from 'lucide-react';
+import { Trash2, Calendar, Clock, DollarSign, Repeat, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { format } from 'date-fns';
+
+interface Booking {
+  id: string;
+  service_type: string;
+  lesson_type: string;
+  lesson_date: string;
+  lesson_time: string;
+  lesson_day: string;
+  amount: number;
+  currency: string;
+  status: string;
+  payment_status: string;
+  can_cancel_until: string;
+  created_at: string;
+  student_email?: string;
+}
 
 const StudentBookingsPage = () => {
-  const { language } = useAuthStore();
+  const { language, user } = useAuthStore();
   const { toast } = useToast();
-  
-  // Mock lesson bookings data
-  const [bookings, setBookings] = useState([
-    {
-      id: '1',
-      service: language === 'en' ? 'Individual Tutoring' : 'Tutoria Individual',
-      lessonType: 'recurring',
-      date: '2025-01-30',
-      time: '14:00',
-      paymentStatus: 'paid',
-      nextPayment: '2025-02-06',
-      canCancel: true,
-    },
-    {
-      id: '2',
-      service: language === 'en' ? 'Group Sessions' : 'Sessões em Grupo',
-      lessonType: 'single',
-      date: '2025-02-03',
-      time: '16:00',
-      paymentStatus: 'paid',
-      nextPayment: null,
-      canCancel: true,
-    },
-    {
-      id: '3',
-      service: language === 'en' ? 'Individual Tutoring' : 'Tutoria Individual',
-      lessonType: 'single',
-      date: '2025-02-10',
-      time: '10:00',
-      paymentStatus: 'pending',
-      nextPayment: null,
-      canCancel: true,
-    },
-    {
-      id: '4',
-      service: language === 'en' ? 'Exam Preparation' : 'Preparação para Exames',
-      lessonType: 'single',
-      date: '2025-01-25',
-      time: '15:00',
-      paymentStatus: 'paid',
-      nextPayment: null,
-      canCancel: false, // Past lesson
-    },
-  ]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Fetch bookings from database
+  const fetchBookings = async () => {
+    try {
+      setRefreshing(true);
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('*')
+        .order('lesson_date', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching bookings:', error);
+        toast({
+          title: language === 'en' ? 'Error' : 'Erro',
+          description: language === 'en' 
+            ? 'Failed to load bookings' 
+            : 'Falha ao carregar agendamentos',
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('Fetched bookings:', data);
+      setBookings(data || []);
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchBookings();
+    }
+  }, [user]);
 
   // Format date based on language
   const formatDate = (dateString: string) => {
@@ -88,12 +102,54 @@ const StudentBookingsPage = () => {
       : date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
+  // Get service name translation
+  const getServiceName = (serviceType: string) => {
+    const serviceNames = {
+      'individual': language === 'en' ? 'Individual Tutoring' : 'Tutoria Individual',
+      'group': language === 'en' ? 'Group Sessions' : 'Sessões em Grupo',
+      'exam-prep': language === 'en' ? 'Exam Preparation' : 'Preparação para Exames'
+    };
+    return serviceNames[serviceType] || serviceType;
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'scheduled':
+        return 'bg-blue-100 text-blue-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'payment_failed':
+        return 'bg-orange-100 text-orange-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'scheduled':
+        return language === 'en' ? 'Scheduled' : 'Agendada';
+      case 'cancelled':
+        return language === 'en' ? 'Cancelled' : 'Cancelada';
+      case 'completed':
+        return language === 'en' ? 'Completed' : 'Concluída';
+      case 'payment_failed':
+        return language === 'en' ? 'Payment Failed' : 'Falha no Pagamento';
+      default:
+        return status;
+    }
+  };
+
   const getPaymentStatusColor = (status: string) => {
     switch (status) {
       case 'paid':
         return 'bg-green-100 text-green-800';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
+      case 'cancelled':
+        return 'bg-gray-100 text-gray-800';
       case 'failed':
         return 'bg-red-100 text-red-800';
       default:
@@ -107,6 +163,8 @@ const StudentBookingsPage = () => {
         return language === 'en' ? 'Paid' : 'Pago';
       case 'pending':
         return language === 'en' ? 'Pending' : 'Pendente';
+      case 'cancelled':
+        return language === 'en' ? 'Cancelled' : 'Cancelado';
       case 'failed':
         return language === 'en' ? 'Failed' : 'Falhou';
       default:
@@ -114,43 +172,89 @@ const StudentBookingsPage = () => {
     }
   };
 
-  const handleCancelBooking = (bookingId: string, lessonType: string) => {
-    // In a real app, this would make an API call to cancel the booking
-    setBookings(prev => prev.filter(booking => booking.id !== bookingId));
-    
-    const message = lessonType === 'recurring' 
-      ? (language === 'en' 
-          ? 'Recurring lesson cancelled. Future payments have been stopped.' 
-          : 'Aula recorrente cancelada. Pagamentos futuros foram interrompidos.')
-      : (language === 'en' 
-          ? 'Lesson cancelled successfully.' 
-          : 'Aula cancelada com sucesso.');
+  // Check if booking can be cancelled
+  const canCancelBooking = (booking: Booking) => {
+    if (booking.status !== 'scheduled') return false;
+    const now = new Date();
+    const canCancelUntil = new Date(booking.can_cancel_until);
+    return now <= canCancelUntil;
+  };
 
-    toast({
-      title: language === 'en' ? 'Booking Cancelled' : 'Agendamento Cancelado',
-      description: message,
-    });
+  const handleCancelBooking = async (bookingId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('cancel-booking', {
+        body: { booking_id: bookingId }
+      });
+
+      if (error) {
+        console.error('Cancellation error:', error);
+        toast({
+          title: language === 'en' ? 'Cancellation Failed' : 'Falha no Cancelamento',
+          description: error.message || (language === 'en' 
+            ? 'Failed to cancel booking' 
+            : 'Falha ao cancelar agendamento'),
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: language === 'en' ? 'Booking Cancelled' : 'Agendamento Cancelado',
+        description: data.message || (language === 'en' 
+          ? 'Booking cancelled successfully' 
+          : 'Agendamento cancelado com sucesso'),
+      });
+
+      // Refresh bookings
+      fetchBookings();
+    } catch (error) {
+      console.error('Cancellation error:', error);
+      toast({
+        title: language === 'en' ? 'Error' : 'Erro',
+        description: language === 'en' 
+          ? 'An error occurred while cancelling the booking' 
+          : 'Ocorreu um erro ao cancelar o agendamento',
+        variant: "destructive",
+      });
+    }
   };
 
   const upcomingBookings = bookings.filter(booking => 
-    new Date(booking.date) >= new Date() || booking.lessonType === 'recurring'
+    new Date(booking.lesson_date) >= new Date() && booking.status === 'scheduled'
   );
   
   const pastBookings = bookings.filter(booking => 
-    new Date(booking.date) < new Date() && booking.lessonType !== 'recurring'
+    new Date(booking.lesson_date) < new Date() || booking.status !== 'scheduled'
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p>{language === 'en' ? 'Loading bookings...' : 'Carregando agendamentos...'}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">
-          {language === 'en' ? 'My Bookings' : 'Meus Agendamentos'}
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          {language === 'en' 
-            ? 'Manage your scheduled lessons and view payment status'
-            : 'Gerencie suas aulas agendadas e visualize o status de pagamento'}
-        </p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">
+            {language === 'en' ? 'My Bookings' : 'Meus Agendamentos'}
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            {language === 'en' 
+              ? 'Manage your scheduled lessons and view payment status'
+              : 'Gerencie suas aulas agendadas e visualize o status de pagamento'}
+          </p>
+        </div>
+        <Button onClick={fetchBookings} disabled={refreshing} variant="outline">
+          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+          {language === 'en' ? 'Refresh' : 'Atualizar'}
+        </Button>
       </div>
 
       {/* Upcoming Bookings */}
@@ -162,8 +266,8 @@ const StudentBookingsPage = () => {
           </CardTitle>
           <CardDescription>
             {language === 'en' 
-              ? 'Your scheduled lessons and recurring bookings'
-              : 'Suas aulas agendadas e reservas recorrentes'}
+              ? 'Your scheduled lessons'
+              : 'Suas aulas agendadas'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -182,52 +286,45 @@ const StudentBookingsPage = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>{language === 'en' ? 'Service' : 'Serviço'}</TableHead>
-                    <TableHead>{language === 'en' ? 'Type' : 'Tipo'}</TableHead>
                     <TableHead>{language === 'en' ? 'Date' : 'Data'}</TableHead>
                     <TableHead>{language === 'en' ? 'Time' : 'Horário'}</TableHead>
+                    <TableHead>{language === 'en' ? 'Status' : 'Status'}</TableHead>
                     <TableHead>{language === 'en' ? 'Payment' : 'Pagamento'}</TableHead>
-                    <TableHead>{language === 'en' ? 'Next Payment' : 'Próximo Pagamento'}</TableHead>
+                    <TableHead>{language === 'en' ? 'Amount' : 'Valor'}</TableHead>
                     <TableHead>{language === 'en' ? 'Actions' : 'Ações'}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {upcomingBookings.map((booking) => (
                     <TableRow key={booking.id}>
-                      <TableCell className="font-medium">{booking.service}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          {booking.lessonType === 'recurring' && (
-                            <Repeat className="h-4 w-4 text-blue-600" />
-                          )}
-                          {booking.lessonType === 'recurring' 
-                            ? (language === 'en' ? 'Recurring' : 'Recorrente')
-                            : (language === 'en' ? 'Single' : 'Única')}
-                        </div>
+                      <TableCell className="font-medium">
+                        {getServiceName(booking.service_type)}
                       </TableCell>
-                      <TableCell>{formatDate(booking.date)}</TableCell>
+                      <TableCell>{formatDate(booking.lesson_date)}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <Clock className="h-4 w-4" />
-                          {booking.time}
+                          {booking.lesson_time}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className={getPaymentStatusColor(booking.paymentStatus)}>
-                          {getPaymentStatusText(booking.paymentStatus)}
+                        <Badge className={getStatusColor(booking.status)}>
+                          {getStatusText(booking.status)}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {booking.nextPayment ? (
-                          <div className="flex items-center gap-1 text-sm">
-                            <DollarSign className="h-4 w-4" />
-                            {formatDate(booking.nextPayment)}
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
+                        <Badge className={getPaymentStatusColor(booking.payment_status)}>
+                          {getPaymentStatusText(booking.payment_status)}
+                        </Badge>
                       </TableCell>
                       <TableCell>
-                        {booking.canCancel && (
+                        <div className="flex items-center gap-1">
+                          <DollarSign className="h-4 w-4" />
+                          £{(booking.amount / 100).toFixed(2)}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {canCancelBooking(booking) && (
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
@@ -240,15 +337,9 @@ const StudentBookingsPage = () => {
                                   {language === 'en' ? 'Cancel Lesson' : 'Cancelar Aula'}
                                 </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  {booking.lessonType === 'recurring' ? (
-                                    language === 'en' 
-                                      ? 'This will cancel your recurring lesson and stop all future payments. This action cannot be undone.'
-                                      : 'Isso cancelará sua aula recorrente e interromperá todos os pagamentos futuros. Esta ação não pode ser desfeita.'
-                                  ) : (
-                                    language === 'en'
-                                      ? 'Are you sure you want to cancel this lesson? This action cannot be undone.'
-                                      : 'Tem certeza de que deseja cancelar esta aula? Esta ação não pode ser desfeita.'
-                                  )}
+                                  {language === 'en'
+                                    ? 'Are you sure you want to cancel this lesson? The payment will not be processed if you cancel more than 24 hours before the lesson.'
+                                    : 'Tem certeza de que deseja cancelar esta aula? O pagamento não será processado se você cancelar com mais de 24 horas de antecedência.'}
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
@@ -256,7 +347,7 @@ const StudentBookingsPage = () => {
                                   {language === 'en' ? 'Keep Lesson' : 'Manter Aula'}
                                 </AlertDialogCancel>
                                 <AlertDialogAction 
-                                  onClick={() => handleCancelBooking(booking.id, booking.lessonType)}
+                                  onClick={() => handleCancelBooking(booking.id)}
                                   className="bg-red-600 hover:bg-red-700"
                                 >
                                   {language === 'en' ? 'Cancel Lesson' : 'Cancelar Aula'}
@@ -284,8 +375,8 @@ const StudentBookingsPage = () => {
             </CardTitle>
             <CardDescription>
               {language === 'en' 
-                ? 'Your completed lessons'
-                : 'Suas aulas concluídas'}
+                ? 'Your completed and cancelled lessons'
+                : 'Suas aulas concluídas e canceladas'}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -296,24 +387,39 @@ const StudentBookingsPage = () => {
                     <TableHead>{language === 'en' ? 'Service' : 'Serviço'}</TableHead>
                     <TableHead>{language === 'en' ? 'Date' : 'Data'}</TableHead>
                     <TableHead>{language === 'en' ? 'Time' : 'Horário'}</TableHead>
+                    <TableHead>{language === 'en' ? 'Status' : 'Status'}</TableHead>
                     <TableHead>{language === 'en' ? 'Payment' : 'Pagamento'}</TableHead>
+                    <TableHead>{language === 'en' ? 'Amount' : 'Valor'}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {pastBookings.map((booking) => (
                     <TableRow key={booking.id}>
-                      <TableCell className="font-medium">{booking.service}</TableCell>
-                      <TableCell>{formatDate(booking.date)}</TableCell>
+                      <TableCell className="font-medium">
+                        {getServiceName(booking.service_type)}
+                      </TableCell>
+                      <TableCell>{formatDate(booking.lesson_date)}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <Clock className="h-4 w-4" />
-                          {booking.time}
+                          {booking.lesson_time}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className={getPaymentStatusColor(booking.paymentStatus)}>
-                          {getPaymentStatusText(booking.paymentStatus)}
+                        <Badge className={getStatusColor(booking.status)}>
+                          {getStatusText(booking.status)}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getPaymentStatusColor(booking.payment_status)}>
+                          {getPaymentStatusText(booking.payment_status)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <DollarSign className="h-4 w-4" />
+                          £{(booking.amount / 100).toFixed(2)}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -349,7 +455,7 @@ const StudentBookingsPage = () => {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">
-              {language === 'en' ? 'Completed' : 'Concluídas'}
+              {language === 'en' ? 'Completed/Cancelled' : 'Concluídas/Canceladas'}
             </CardTitle>
           </CardHeader>
           <CardContent>
