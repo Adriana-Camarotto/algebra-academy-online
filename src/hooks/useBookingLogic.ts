@@ -129,22 +129,16 @@ export const useBookingLogic = (language: string, user: any) => {
     setIsProcessing(true);
 
     try {
-      const services = [
-        { id: 'individual', price: 1 }, // £0.01 = 1 pence
-        { id: 'group', price: 1 },      // £0.01 = 1 pence
-        { id: 'exam-prep', price: 1 }   // £0.01 = 1 pence
-      ];
-
-      const selectedServiceData = services.find(s => s.id === selectedService);
-      const baseAmount = selectedServiceData?.price || 1;
+      // Service pricing - all services cost £0.01 (1 pence)
+      const baseAmount = 1; // £0.01 = 1 pence
       
       console.log('Processing booking with student email:', studentEmailForParent);
       
       const { data, error } = await supabase.functions.invoke('create-payment', {
         body: {
           amount: baseAmount,
-          currency: 'gbp', // Changed to GBP for British pounds
-          product_name: `Math Tutoring - ${selectedService}`,
+          currency: 'gbp',
+          product_name: `Tutoria de Matemática - ${selectedService}`,
           booking_details: {
             service: selectedService,
             lesson_type: lessonType,
@@ -158,10 +152,12 @@ export const useBookingLogic = (language: string, user: any) => {
       });
 
       if (error) {
-        throw error;
+        console.error('Supabase function error:', error);
+        throw new Error(error.message || 'Erro ao criar sessão de pagamento');
       }
 
       if (data?.url) {
+        // Open Stripe checkout in a new tab
         window.open(data.url, '_blank');
         
         toast({
@@ -171,14 +167,18 @@ export const useBookingLogic = (language: string, user: any) => {
             : 'Por favor, complete seu pagamento na nova aba.',
           variant: "default",
         });
+      } else {
+        throw new Error('URL de pagamento não recebida');
       }
     } catch (error) {
       console.error('Payment error:', error);
       toast({
         title: language === 'en' ? 'Payment Error' : 'Erro no Pagamento',
-        description: language === 'en' 
-          ? 'There was an error processing your payment. Please try again.' 
-          : 'Houve um erro ao processar seu pagamento. Tente novamente.',
+        description: error instanceof Error 
+          ? error.message 
+          : (language === 'en' 
+            ? 'There was an error processing your payment. Please try again.' 
+            : 'Houve um erro ao processar seu pagamento. Tente novamente.'),
         variant: "destructive",
       });
     } finally {

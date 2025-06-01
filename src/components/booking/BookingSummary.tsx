@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { format } from 'date-fns';
+import { CreditCard, Calendar, Clock, User } from 'lucide-react';
 
 interface Service {
   id: string;
@@ -40,81 +41,110 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
   onConfirmBooking,
   onPrevious
 }) => {
+  const selectedServiceData = services.find(s => s.id === selectedService);
+
   return (
     <div className="grid md:grid-cols-2 gap-6">
       <Card>
         <CardHeader>
-          <CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-primary" />
             {language === 'en' ? 'Booking Summary' : 'Resumo da Reserva'}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <p className="text-sm text-gray-500">
-              {language === 'en' ? 'Service' : 'Serviço'}:
-            </p>
-            <p className="font-medium">
-              {services.find(s => s.id === selectedService)?.name}
-            </p>
-            {selectedService === 'group' && (
-              <p className="text-xs text-blue-600">
-                {language === 'en' ? '6 classes total, 60 minutes each' : '6 aulas no total, 60 minutos cada'}
-              </p>
-            )}
-          </div>
-          {selectedService === 'individual' && lessonType && (
-            <div>
-              <p className="text-sm text-gray-500">
-                {language === 'en' ? 'Lesson Type' : 'Tipo de Aula'}:
-              </p>
-              <p className="font-medium">
-                {lessonType === 'single' 
-                  ? (language === 'en' ? 'Single Lesson' : 'Aula Única')
-                  : (language === 'en' ? 'Recurring Lessons' : 'Aulas Recorrentes')}
-              </p>
+          <div className="space-y-3">
+            <div className="flex items-start gap-3">
+              <User className="h-4 w-4 mt-1 text-gray-500" />
+              <div>
+                <p className="text-sm text-gray-500">
+                  {language === 'en' ? 'Service' : 'Serviço'}:
+                </p>
+                <p className="font-medium">{selectedServiceData?.name}</p>
+                {selectedService === 'group' && (
+                  <p className="text-xs text-blue-600">
+                    {language === 'en' ? '6 classes total, 60 minutes each' : '6 aulas no total, 60 minutos cada'}
+                  </p>
+                )}
+              </div>
             </div>
-          )}
-          <div>
-            <p className="text-sm text-gray-500">
-              {language === 'en' ? 'Duration' : 'Duração'}:
-            </p>
-            <p className="font-medium">{services.find(s => s.id === selectedService)?.duration}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">
-              {language === 'en' ? 'Date' : 'Data'}:
-            </p>
-            <p className="font-medium">
-              {selectedDate ? format(selectedDate, 'PPP') : (language === 'en' ? 'Not selected' : 'Não selecionado')}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">
-              {language === 'en' ? 'Time' : 'Horário'}:
-            </p>
-            <p className="font-medium">
-              {selectedTime || (language === 'en' ? 'Not selected' : 'Não selecionado')}
-            </p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">
-              {language === 'en' ? 'Price' : 'Preço'}:
-            </p>
-            <p className="font-medium">{services.find(s => s.id === selectedService)?.price}</p>
-            {lessonType === 'recurring' && (
-              <p className="text-xs text-amber-600">
-                {language === 'en' 
-                  ? 'First payment now, then weekly automatically'
-                  : 'Primeiro pagamento agora, depois semanalmente automaticamente'}
-              </p>
+
+            {selectedService === 'individual' && lessonType && (
+              <div className="flex items-start gap-3">
+                <Clock className="h-4 w-4 mt-1 text-gray-500" />
+                <div>
+                  <p className="text-sm text-gray-500">
+                    {language === 'en' ? 'Lesson Type' : 'Tipo de Aula'}:
+                  </p>
+                  <p className="font-medium">
+                    {lessonType === 'single' 
+                      ? (language === 'en' ? 'Single Lesson' : 'Aula Única')
+                      : (language === 'en' ? 'Recurring Lessons' : 'Aulas Recorrentes')}
+                  </p>
+                </div>
+              </div>
             )}
+
+            <div className="flex items-start gap-3">
+              <Clock className="h-4 w-4 mt-1 text-gray-500" />
+              <div>
+                <p className="text-sm text-gray-500">
+                  {language === 'en' ? 'Duration' : 'Duração'}:
+                </p>
+                <p className="font-medium">{selectedServiceData?.duration}</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <Calendar className="h-4 w-4 mt-1 text-gray-500" />
+              <div>
+                <p className="text-sm text-gray-500">
+                  {language === 'en' ? 'Date' : 'Data'}:
+                </p>
+                <p className="font-medium">
+                  {selectedDate ? format(selectedDate, 'PPP') : (language === 'en' ? 'Not selected' : 'Não selecionado')}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <Clock className="h-4 w-4 mt-1 text-gray-500" />
+              <div>
+                <p className="text-sm text-gray-500">
+                  {language === 'en' ? 'Time' : 'Horário'}:
+                </p>
+                <p className="font-medium">
+                  {selectedTime || (language === 'en' ? 'Not selected' : 'Não selecionado')}
+                </p>
+              </div>
+            </div>
+
+            <div className="border-t pt-4">
+              <div className="flex items-start gap-3">
+                <CreditCard className="h-4 w-4 mt-1 text-green-600" />
+                <div>
+                  <p className="text-sm text-gray-500">
+                    {language === 'en' ? 'Price' : 'Preço'}:
+                  </p>
+                  <p className="font-bold text-green-600 text-lg">{selectedServiceData?.price}</p>
+                  {lessonType === 'recurring' && (
+                    <p className="text-xs text-amber-600">
+                      {language === 'en' 
+                        ? 'First payment now, then weekly automatically'
+                        : 'Primeiro pagamento agora, depois semanalmente automaticamente'}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <CreditCard className="h-5 w-5 text-primary" />
             {language === 'en' ? 'Terms & Payment' : 'Termos e Pagamento'}
           </CardTitle>
         </CardHeader>
@@ -167,11 +197,19 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
           <Button 
             onClick={onConfirmBooking}
             disabled={!termsAccepted || isProcessing}
+            className="bg-green-600 hover:bg-green-700"
           >
-            {isProcessing 
-              ? (language === 'en' ? 'Processing...' : 'Processando...') 
-              : (language === 'en' ? 'Confirm Booking & Pay' : 'Confirmar Agendamento e Pagar')
-            }
+            {isProcessing ? (
+              <>
+                <CreditCard className="h-4 w-4 mr-2 animate-pulse" />
+                {language === 'en' ? 'Processing...' : 'Processando...'}
+              </>
+            ) : (
+              <>
+                <CreditCard className="h-4 w-4 mr-2" />
+                {language === 'en' ? 'Pay £0.01 & Book' : 'Pagar £0.01 & Reservar'}
+              </>
+            )}
           </Button>
         </CardFooter>
       </Card>
