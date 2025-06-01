@@ -130,12 +130,27 @@ export const useBookingLogic = (language: string, user: any) => {
     setIsProcessing(true);
 
     try {
-      // Service pricing - Stripe minimum is £0.30 (30 pence)
-      const baseAmount = 30; // £0.30 = 30 pence (Stripe minimum)
+      // Ensure user is authenticated
+      if (!user) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      // Get current session to ensure we have a valid token
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        console.error('Session error:', sessionError);
+        throw new Error('Sessão inválida. Por favor, faça login novamente.');
+      }
+
+      console.log('User session valid, proceeding with booking creation');
+
+      // Service pricing - minimum amount for Stripe
+      const baseAmount = 30; // £0.30 = 30 pence (Stripe minimum for GBP)
       
       console.log('Creating booking with student email:', studentEmailForParent);
       
-      // First create the booking in the database
+      // Create the booking using the edge function
       const { data: bookingData, error: bookingError } = await supabase.functions.invoke('create-booking', {
         body: {
           service_type: selectedService,
@@ -151,6 +166,11 @@ export const useBookingLogic = (language: string, user: any) => {
       if (bookingError) {
         console.error('Booking creation error:', bookingError);
         throw new Error(bookingError.message || 'Erro ao criar agendamento');
+      }
+
+      if (!bookingData || !bookingData.success) {
+        console.error('Booking creation failed:', bookingData);
+        throw new Error(bookingData?.error || 'Erro ao criar agendamento');
       }
 
       console.log('Booking created successfully:', bookingData);

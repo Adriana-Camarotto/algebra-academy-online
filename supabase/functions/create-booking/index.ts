@@ -15,22 +15,43 @@ serve(async (req) => {
   try {
     console.log("Starting booking creation process");
 
-    // Create Supabase client with service role key
+    // Create Supabase client with service role key for admin operations
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Get authenticated user
+    // Create client with anon key for user auth
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    );
+
+    // Get the authorization header
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header");
+    if (!authHeader) {
+      console.error("No authorization header found");
+      throw new Error("Token de autenticação não encontrado");
+    }
 
+    // Extract the JWT token
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
-    if (userError || !userData.user) throw new Error("User not authenticated");
+    console.log("Auth token received:", token.substring(0, 20) + "...");
 
-    const user = userData.user;
-    console.log("User authenticated:", user.email);
+    // Verify the JWT token and get the user
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    
+    if (userError) {
+      console.error("User authentication error:", userError);
+      throw new Error(`Erro de autenticação: ${userError.message}`);
+    }
+
+    if (!user) {
+      console.error("No user found from token");
+      throw new Error("Usuário não encontrado");
+    }
+
+    console.log("User authenticated successfully:", user.email);
 
     // Get request body
     const {
@@ -40,7 +61,7 @@ serve(async (req) => {
       lesson_time,
       lesson_day,
       student_email,
-      amount = 30 // Default to minimum Stripe amount
+      amount = 30 // Default to minimum Stripe amount (30 pence = £0.30)
     } = await req.json();
 
     console.log("Booking data:", {
@@ -50,8 +71,14 @@ serve(async (req) => {
       lesson_time,
       lesson_day,
       student_email,
-      amount
+      amount,
+      user_id: user.id
     });
+
+    // Validate required fields
+    if (!service_type || !lesson_date || !lesson_time || !lesson_day) {
+      throw new Error("Dados obrigatórios não fornecidos");
+    }
 
     // Calculate scheduled payment date (24h + 1min before lesson)
     const lessonDateTime = new Date(`${lesson_date}T${lesson_time}:00Z`);
@@ -66,12 +93,12 @@ serve(async (req) => {
       canCancelUntil: canCancelUntil.toISOString()
     });
 
-    // Create booking record
+    // Create booking record using admin client
     const { data: booking, error: bookingError } = await supabaseAdmin
       .from('bookings')
       .insert({
         user_id: user.id,
-        student_email,
+        student_email: student_email || user.email,
         service_type,
         lesson_type,
         lesson_date,
@@ -98,7 +125,8 @@ serve(async (req) => {
       success: true, 
       booking_id: booking.id,
       scheduled_payment_date: scheduledPaymentDate.toISOString(),
-      can_cancel_until: canCancelUntil.toISOString()
+      can_cancel_until: canCancelUntil.toISOString(),
+      message: "Agendamento criado com sucesso. O pagamento será processado 24 horas antes da aula."
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
