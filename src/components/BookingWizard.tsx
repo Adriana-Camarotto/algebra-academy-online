@@ -53,7 +53,7 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
       description: language === 'en' 
         ? 'One-on-one personalized math tutoring sessions' 
         : 'Sessões de tutoria de matemática personalizada individual',
-      price: '£0.30',
+      price: '£0.01',
       duration: '60 min',
       icon: <Clock className="h-6 w-6" />
     },
@@ -63,7 +63,7 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
       description: language === 'en' 
         ? 'Small group math tutoring sessions (2-4 students) - 6 classes total' 
         : 'Sessões de tutoria de matemática em pequenos grupos (2-4 alunos) - 6 aulas no total',
-      price: '£0.30',
+      price: '£0.01',
       duration: '60 min',
       icon: <Users className="h-6 w-6" />
     },
@@ -73,7 +73,7 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
       description: language === 'en' 
         ? 'Intensive exam preparation sessions' 
         : 'Sessões intensivas de preparação para exames',
-      price: '£0.30',
+      price: '£0.01',
       duration: '60 min',
       icon: <CreditCard className="h-6 w-6" />
     }

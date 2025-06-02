@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { format, startOfDay } from 'date-fns';
@@ -130,82 +129,56 @@ export const useBookingLogic = (language: string, user: any) => {
     setIsProcessing(true);
 
     try {
-      console.log('Starting booking process...');
-
-      // Check authentication first - this is the main issue
-      if (!user || !user.id) {
-        console.error('User not authenticated or missing ID:', user);
-        throw new Error('Você precisa estar logado para fazer um agendamento. Por favor, faça login e tente novamente.');
-      }
-
-      console.log('User is authenticated:', { id: user.id, email: user.email });
-
-      // Service pricing - minimum amount for Stripe
-      const baseAmount = 30; // £0.30 = 30 pence (Stripe minimum for GBP)
+      // Service pricing - all services cost £0.01 (1 pence)
+      const baseAmount = 1; // £0.01 = 1 pence
       
-      console.log('Creating booking with data:', {
-        user_id: user.id,
-        service_type: selectedService,
-        lesson_type: lessonType,
-        lesson_date: format(selectedDate!, 'yyyy-MM-dd'),
-        lesson_time: selectedTime,
-        lesson_day: selectedDay,
-        student_email: studentEmailForParent,
-        amount: baseAmount
-      });
+      console.log('Processing booking with student email:', studentEmailForParent);
       
-      // Create the booking using the edge function
-      const { data: bookingData, error: bookingError } = await supabase.functions.invoke('create-booking', {
+      const { data, error } = await supabase.functions.invoke('create-payment', {
         body: {
-          service_type: selectedService,
-          lesson_type: lessonType,
-          lesson_date: format(selectedDate!, 'yyyy-MM-dd'),
-          lesson_time: selectedTime,
-          lesson_day: selectedDay,
-          student_email: studentEmailForParent,
-          amount: baseAmount
+          amount: baseAmount,
+          currency: 'gbp',
+          product_name: `Tutoria de Matemática - ${selectedService}`,
+          booking_details: {
+            service: selectedService,
+            lesson_type: lessonType,
+            date: format(selectedDate!, 'yyyy-MM-dd'),
+            day: selectedDay,
+            time: selectedTime,
+            student_email: studentEmailForParent,
+            booked_by_parent: !!studentEmailForParent,
+          }
         }
       });
 
-      if (bookingError) {
-        console.error('Booking creation error:', bookingError);
-        throw new Error(bookingError.message || 'Erro ao criar agendamento');
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(error.message || 'Erro ao criar sessão de pagamento');
       }
 
-      if (!bookingData || !bookingData.success) {
-        console.error('Booking creation failed:', bookingData);
-        throw new Error(bookingData?.error || 'Erro ao criar agendamento');
+      if (data?.url) {
+        // Open Stripe checkout in a new tab
+        window.open(data.url, '_blank');
+        
+        toast({
+          title: language === 'en' ? 'Redirecting to Payment' : 'Redirecionando para Pagamento',
+          description: language === 'en' 
+            ? 'Please complete your payment in the new tab.' 
+            : 'Por favor, complete seu pagamento na nova aba.',
+          variant: "default",
+        });
+      } else {
+        throw new Error('URL de pagamento não recebida');
       }
-
-      console.log('Booking created successfully:', bookingData);
-
-      toast({
-        title: language === 'en' ? 'Booking Created' : 'Agendamento Criado',
-        description: language === 'en' 
-          ? 'Your lesson has been scheduled. Payment will be processed 24 hours before the lesson.' 
-          : 'Sua aula foi agendada. O pagamento será processado 24 horas antes da aula.',
-        variant: "default",
-      });
-
-      // Reset wizard state after successful booking
-      setCurrentStep(1);
-      setSelectedService(null);
-      setLessonType(null);
-      setSelectedDay(null);
-      setSelectedTime(null);
-      setSelectedDate(undefined);
-      setTermsAccepted(false);
-      setStudentEmail('');
-
     } catch (error) {
-      console.error('Booking error:', error);
+      console.error('Payment error:', error);
       toast({
-        title: language === 'en' ? 'Booking Error' : 'Erro no Agendamento',
+        title: language === 'en' ? 'Payment Error' : 'Erro no Pagamento',
         description: error instanceof Error 
           ? error.message 
           : (language === 'en' 
-            ? 'There was an error creating your booking. Please try again.' 
-            : 'Houve um erro ao criar seu agendamento. Tente novamente.'),
+            ? 'There was an error processing your payment. Please try again.' 
+            : 'Houve um erro ao processar seu pagamento. Tente novamente.'),
         variant: "destructive",
       });
     } finally {

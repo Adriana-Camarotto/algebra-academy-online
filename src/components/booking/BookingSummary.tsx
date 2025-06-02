@@ -124,24 +124,16 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                 <CreditCard className="h-4 w-4 mt-1 text-green-600" />
                 <div>
                   <p className="text-sm text-gray-500">
-                    {language === 'en' ? 'Payment' : 'Pagamento'}:
+                    {language === 'en' ? 'Price' : 'Preço'}:
                   </p>
-                  <p className="font-bold text-blue-600 text-lg">
-                    {language === 'en' ? 'Scheduled' : 'Agendado'}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {language === 'en' 
-                      ? 'Payment will be processed 24 hours before the lesson'
-                      : 'Pagamento será processado 24 horas antes da aula'}
-                  </p>
-                  <p className="text-sm font-medium text-green-600 mt-1">
-                    £0.30
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {language === 'en' 
-                      ? 'Minimum payment amount required by Stripe'
-                      : 'Valor mínimo de pagamento exigido pelo Stripe'}
-                  </p>
+                  <p className="font-bold text-green-600 text-lg">{selectedServiceData?.price}</p>
+                  {lessonType === 'recurring' && (
+                    <p className="text-xs text-amber-600">
+                      {language === 'en' 
+                        ? 'First payment now, then weekly automatically'
+                        : 'Primeiro pagamento agora, depois semanalmente automaticamente'}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -153,49 +145,34 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5 text-primary" />
-            {language === 'en' ? 'Terms & Booking' : 'Termos e Agendamento'}
+            {language === 'en' ? 'Terms & Payment' : 'Termos e Pagamento'}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <h4 className="font-medium text-sm mb-2">
-              {language === 'en' ? 'Payment & Cancellation Policy' : 'Política de Pagamento e Cancelamento'}
+              {language === 'en' ? 'Refunds & Cancellations Policy' : 'Política de Reembolsos e Cancelamentos'}
             </h4>
             <div className="text-xs text-gray-600 space-y-2">
               <p>
-                <strong>
-                  {language === 'en' 
-                    ? 'Scheduled Payment:' 
-                    : 'Pagamento Agendado:'}
-                </strong>{' '}
                 {language === 'en' 
-                  ? 'Payment will be automatically processed 24 hours and 1 minute before your lesson.'
-                  : 'O pagamento será processado automaticamente 24 horas e 1 minuto antes da sua aula.'}
+                  ? 'Please note that refunds are not available.'
+                  : 'Por favor, note que reembolsos não estão disponíveis.'}
               </p>
               <p>
-                <strong>
-                  {language === 'en' 
-                    ? 'Free Cancellation:' 
-                    : 'Cancelamento Gratuito:'}
-                </strong>{' '}
                 {language === 'en'
-                  ? 'You can cancel your lesson up to 24 hours before the scheduled time without any charge. The payment will not be processed if you cancel in time.'
-                  : 'Você pode cancelar sua aula até 24 horas antes do horário agendado sem nenhuma cobrança. O pagamento não será processado se você cancelar a tempo.'}
-              </p>
-              <p>
-                <strong>
-                  {language === 'en' 
-                    ? 'Late Cancellation:' 
-                    : 'Cancelamento Tardio:'}
-                </strong>{' '}
-                {language === 'en'
-                  ? 'If you cancel less than 24 hours before the lesson, the payment will still be processed as the payment window has passed.'
-                  : 'Se você cancelar com menos de 24 horas antes da aula, o pagamento ainda será processado pois a janela de pagamento já passou.'}
+                  ? 'If for any reason you are unable to attend the class then you must contact us before the class start time for the option to have it rescheduled to either of the 2 following weeks.'
+                  : 'Se por qualquer motivo você não puder comparecer à aula, deve nos contatar antes do horário de início da aula para ter a opção de reagendá-la para qualquer uma das 2 semanas seguintes.'}
               </p>
               <p>
                 {language === 'en'
                   ? 'Only one rescheduling of an individual class pass is permitted and we will only reschedule a class like for like.'
                   : 'Apenas um reagendamento de uma aula individual é permitido e só reagendaremos uma aula igual por igual.'}
+              </p>
+              <p>
+                {language === 'en'
+                  ? 'Workshops and special sessions cannot be rescheduled due to the nature of the event.'
+                  : 'Workshops e sessões especiais não podem ser reagendados devido à natureza do evento.'}
               </p>
             </div>
           </div>
@@ -208,8 +185,8 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
             />
             <Label htmlFor="terms" className="text-xs leading-relaxed">
               {language === 'en'
-                ? 'I have read and agree to the payment and cancellation terms above *'
-                : 'Li e concordo com os termos de pagamento e cancelamento acima *'}
+                ? 'I have read and agree to the terms above *'
+                : 'Li e concordo com os termos acima *'}
             </Label>
           </div>
         </CardContent>
@@ -230,7 +207,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
             ) : (
               <>
                 <CreditCard className="h-4 w-4 mr-2" />
-                {language === 'en' ? 'Pay and Book Lesson' : 'Pagar e Agendar Aula'}
+                {language === 'en' ? 'Pay £0.01 & Book' : 'Pagar £0.01 & Reservar'}
               </>
             )}
           </Button>

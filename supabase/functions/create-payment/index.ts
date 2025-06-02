@@ -21,11 +21,6 @@ serve(async (req) => {
     const { amount, currency = 'gbp', product_name, booking_details } = await req.json();
     console.log("Request data:", { amount, currency, product_name, booking_details });
 
-    // Stripe has a minimum amount requirement of £0.30 for GBP
-    const minimumAmount = 30; // £0.30 = 30 pence
-    const finalAmount = Math.max(amount, minimumAmount);
-    console.log("Using amount:", finalAmount, "pence (minimum required)");
-
     // Retrieve authenticated user (optional for one-time payments)
     let userEmail = "guest@example.com";
     const authHeader = req.headers.get("Authorization");
@@ -86,7 +81,7 @@ serve(async (req) => {
                 `Aula agendada para ${booking_details.date} (${booking_details.day}) às ${booking_details.time}` : 
                 "Sessão de tutoria de matemática individual"
             },
-            unit_amount: finalAmount,
+            unit_amount: amount,
           },
           quantity: 1,
         },
