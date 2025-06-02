@@ -225,12 +225,12 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
             {isProcessing ? (
               <>
                 <CreditCard className="h-4 w-4 mr-2 animate-pulse" />
-                {language === 'en' ? 'Creating...' : 'Criando...'}
+                {language === 'en' ? 'Processing...' : 'Processando...'}
               </>
             ) : (
               <>
-                <Calendar className="h-4 w-4 mr-2" />
-                {language === 'en' ? 'Schedule Lesson' : 'Agendar Aula'}
+                <CreditCard className="h-4 w-4 mr-2" />
+                {language === 'en' ? 'Pay and Book Lesson' : 'Pagar e Agendar Aula'}
               </>
             )}
           </Button>

@@ -21,35 +21,39 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Create client with anon key for user auth
-    const supabase = createClient(
+    // Create client with anon key for user auth - this is the key fix
+    const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? ""
     );
 
-    // Get the authorization header
+    // Get the authorization header from the request
     const authHeader = req.headers.get("Authorization");
+    console.log("Auth header present:", !!authHeader);
+    
     if (!authHeader) {
       console.error("No authorization header found");
       return new Response(JSON.stringify({ 
-        error: "Token de autenticação não encontrado"
+        success: false,
+        error: "Token de autenticação não encontrado. Por favor, faça login novamente."
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 401,
       });
     }
 
-    // Extract the JWT token
+    // Extract and verify the JWT token
     const token = authHeader.replace("Bearer ", "");
-    console.log("Auth token received for booking creation");
+    console.log("Extracted token, attempting user verification");
 
-    // Verify the JWT token and get the user using anon client
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    // Use the anon client to verify the user
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
     
     if (userError) {
-      console.error("User authentication error:", userError);
+      console.error("User authentication error:", userError.message);
       return new Response(JSON.stringify({ 
-        error: `Erro de autenticação: ${userError.message}`
+        success: false,
+        error: `Erro de autenticação: ${userError.message}. Por favor, faça login novamente.`
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 401,
@@ -59,14 +63,15 @@ serve(async (req) => {
     if (!user) {
       console.error("No user found from token");
       return new Response(JSON.stringify({ 
-        error: "Usuário não encontrado"
+        success: false,
+        error: "Usuário não encontrado. Por favor, faça login novamente."
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 401,
       });
     }
 
-    console.log("User authenticated successfully:", user.email);
+    console.log("User authenticated successfully:", { id: user.id, email: user.email });
 
     // Get request body
     const {
@@ -79,7 +84,7 @@ serve(async (req) => {
       amount = 30 // Default to minimum Stripe amount (30 pence = £0.30)
     } = await req.json();
 
-    console.log("Booking data:", {
+    console.log("Booking data received:", {
       service_type,
       lesson_type,
       lesson_date,
@@ -92,7 +97,9 @@ serve(async (req) => {
 
     // Validate required fields
     if (!service_type || !lesson_date || !lesson_time || !lesson_day) {
+      console.error("Missing required fields");
       return new Response(JSON.stringify({ 
+        success: false,
         error: "Dados obrigatórios não fornecidos"
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -137,6 +144,7 @@ serve(async (req) => {
     if (bookingError) {
       console.error("Booking creation error:", bookingError);
       return new Response(JSON.stringify({ 
+        success: false,
         error: `Erro ao criar agendamento: ${bookingError.message}`
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -160,6 +168,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Booking creation error:", error);
     return new Response(JSON.stringify({ 
+      success: false,
       error: error.message || "Erro interno do servidor",
       details: "Erro ao criar agendamento. Verifique os logs para mais detalhes."
     }), {

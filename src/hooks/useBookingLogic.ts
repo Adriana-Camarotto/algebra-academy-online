@@ -132,30 +132,19 @@ export const useBookingLogic = (language: string, user: any) => {
     try {
       console.log('Starting booking process...');
 
-      // Ensure user is authenticated
-      if (!user) {
-        throw new Error('Usuário não autenticado');
+      // Check authentication first - this is the main issue
+      if (!user || !user.id) {
+        console.error('User not authenticated or missing ID:', user);
+        throw new Error('Você precisa estar logado para fazer um agendamento. Por favor, faça login e tente novamente.');
       }
 
-      // Get current session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error('Session error:', sessionError);
-        throw new Error('Erro de sessão. Por favor, faça login novamente.');
-      }
-
-      if (!session || !session.access_token) {
-        console.error('No valid session found');
-        throw new Error('Sessão não encontrada. Por favor, faça login novamente.');
-      }
-
-      console.log('Valid session found, proceeding with booking creation');
+      console.log('User is authenticated:', { id: user.id, email: user.email });
 
       // Service pricing - minimum amount for Stripe
       const baseAmount = 30; // £0.30 = 30 pence (Stripe minimum for GBP)
       
       console.log('Creating booking with data:', {
+        user_id: user.id,
         service_type: selectedService,
         lesson_type: lessonType,
         lesson_date: format(selectedDate!, 'yyyy-MM-dd'),
