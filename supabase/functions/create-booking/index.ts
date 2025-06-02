@@ -38,7 +38,7 @@ serve(async (req) => {
     const token = authHeader.replace("Bearer ", "");
     console.log("Auth token received for booking creation");
 
-    // Verify the JWT token and get the user
+    // Verify the JWT token and get the user using anon client
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
     if (userError) {

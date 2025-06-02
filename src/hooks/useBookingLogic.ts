@@ -135,14 +135,22 @@ export const useBookingLogic = (language: string, user: any) => {
         throw new Error('Usuário não autenticado');
       }
 
-      console.log('User authenticated, proceeding with booking creation');
+      // Get the current session with a fresh token
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session?.access_token) {
+        console.error('Session error:', sessionError);
+        throw new Error('Sessão inválida. Por favor, faça login novamente.');
+      }
+
+      console.log('Valid session found, proceeding with booking creation');
 
       // Service pricing - minimum amount for Stripe
       const baseAmount = 30; // £0.30 = 30 pence (Stripe minimum for GBP)
       
       console.log('Creating booking with student email:', studentEmailForParent);
       
-      // Create the booking using the edge function
+      // Create the booking using the edge function with the session token
       const { data: bookingData, error: bookingError } = await supabase.functions.invoke('create-booking', {
         body: {
           service_type: selectedService,
@@ -152,7 +160,10 @@ export const useBookingLogic = (language: string, user: any) => {
           lesson_day: selectedDay,
           student_email: studentEmailForParent,
           amount: baseAmount
-        }
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
 
       if (bookingError) {
