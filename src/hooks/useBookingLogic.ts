@@ -135,15 +135,7 @@ export const useBookingLogic = (language: string, user: any) => {
         throw new Error('Usuário não autenticado');
       }
 
-      // Get current session to ensure we have a valid token
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !session) {
-        console.error('Session error:', sessionError);
-        throw new Error('Sessão inválida. Por favor, faça login novamente.');
-      }
-
-      console.log('User session valid, proceeding with booking creation');
+      console.log('User authenticated, proceeding with booking creation');
 
       // Service pricing - minimum amount for Stripe
       const baseAmount = 30; // £0.30 = 30 pence (Stripe minimum for GBP)
