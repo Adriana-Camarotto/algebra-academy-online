@@ -126,7 +126,12 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
                   <p className="text-sm text-gray-500">
                     {language === 'en' ? 'Price' : 'Preço'}:
                   </p>
-                  <p className="font-bold text-green-600 text-lg">{selectedServiceData?.price}</p>
+                  <p className="font-bold text-green-600 text-lg">£0.30</p>
+                  <p className="text-xs text-gray-500">
+                    {language === 'en' 
+                      ? 'Minimum payment amount required by Stripe'
+                      : 'Valor mínimo de pagamento exigido pelo Stripe'}
+                  </p>
                   {lessonType === 'recurring' && (
                     <p className="text-xs text-amber-600">
                       {language === 'en' 
@@ -207,7 +212,7 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
             ) : (
               <>
                 <CreditCard className="h-4 w-4 mr-2" />
-                {language === 'en' ? 'Pay £0.01 & Book' : 'Pagar £0.01 & Reservar'}
+                {language === 'en' ? 'Pay £0.30 & Book' : 'Pagar £0.30 & Reservar'}
               </>
             )}
           </Button>

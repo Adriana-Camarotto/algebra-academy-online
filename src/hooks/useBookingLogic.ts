@@ -129,8 +129,8 @@ export const useBookingLogic = (language: string, user: any) => {
     setIsProcessing(true);
 
     try {
-      // Service pricing - all services cost £0.01 (1 pence)
-      const baseAmount = 1; // £0.01 = 1 pence
+      // Service pricing - Stripe minimum is £0.30 (30 pence)
+      const baseAmount = 30; // £0.30 = 30 pence (Stripe minimum)
       
       console.log('Processing booking with student email:', studentEmailForParent);
       
