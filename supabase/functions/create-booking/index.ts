@@ -31,7 +31,12 @@ serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       console.error("No authorization header found");
-      throw new Error("Token de autenticação não encontrado");
+      return new Response(JSON.stringify({ 
+        error: "Token de autenticação não encontrado"
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+      });
     }
 
     // Extract the JWT token
@@ -43,12 +48,22 @@ serve(async (req) => {
     
     if (userError) {
       console.error("User authentication error:", userError);
-      throw new Error(`Erro de autenticação: ${userError.message}`);
+      return new Response(JSON.stringify({ 
+        error: `Erro de autenticação: ${userError.message}`
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+      });
     }
 
     if (!user) {
       console.error("No user found from token");
-      throw new Error("Usuário não encontrado");
+      return new Response(JSON.stringify({ 
+        error: "Usuário não encontrado"
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+      });
     }
 
     console.log("User authenticated successfully:", user.email);
@@ -77,7 +92,12 @@ serve(async (req) => {
 
     // Validate required fields
     if (!service_type || !lesson_date || !lesson_time || !lesson_day) {
-      throw new Error("Dados obrigatórios não fornecidos");
+      return new Response(JSON.stringify({ 
+        error: "Dados obrigatórios não fornecidos"
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
     }
 
     // Calculate scheduled payment date (24h + 1min before lesson)
@@ -116,7 +136,12 @@ serve(async (req) => {
 
     if (bookingError) {
       console.error("Booking creation error:", bookingError);
-      throw new Error(`Erro ao criar agendamento: ${bookingError.message}`);
+      return new Response(JSON.stringify({ 
+        error: `Erro ao criar agendamento: ${bookingError.message}`
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      });
     }
 
     console.log("Booking created successfully:", booking.id);
@@ -135,7 +160,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Booking creation error:", error);
     return new Response(JSON.stringify({ 
-      error: error.message,
+      error: error.message || "Erro interno do servidor",
       details: "Erro ao criar agendamento. Verifique os logs para mais detalhes."
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
