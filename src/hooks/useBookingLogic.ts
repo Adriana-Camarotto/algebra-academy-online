@@ -130,12 +130,14 @@ export const useBookingLogic = (language: string, user: any) => {
     setIsProcessing(true);
 
     try {
+      console.log('Starting booking process...');
+
       // Ensure user is authenticated
       if (!user) {
         throw new Error('Usuário não autenticado');
       }
 
-      // Get the current session and refresh token if needed
+      // Get current session
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
@@ -143,24 +145,9 @@ export const useBookingLogic = (language: string, user: any) => {
         throw new Error('Erro de sessão. Por favor, faça login novamente.');
       }
 
-      if (!session) {
-        console.error('No session found');
+      if (!session || !session.access_token) {
+        console.error('No valid session found');
         throw new Error('Sessão não encontrada. Por favor, faça login novamente.');
-      }
-
-      // Refresh the session to get a fresh token
-      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-      
-      if (refreshError) {
-        console.error('Token refresh error:', refreshError);
-        throw new Error('Erro ao renovar sessão. Por favor, faça login novamente.');
-      }
-
-      const validSession = refreshData.session || session;
-      
-      if (!validSession?.access_token) {
-        console.error('No valid access token found');
-        throw new Error('Token de acesso inválido. Por favor, faça login novamente.');
       }
 
       console.log('Valid session found, proceeding with booking creation');
@@ -168,9 +155,17 @@ export const useBookingLogic = (language: string, user: any) => {
       // Service pricing - minimum amount for Stripe
       const baseAmount = 30; // £0.30 = 30 pence (Stripe minimum for GBP)
       
-      console.log('Creating booking with student email:', studentEmailForParent);
+      console.log('Creating booking with data:', {
+        service_type: selectedService,
+        lesson_type: lessonType,
+        lesson_date: format(selectedDate!, 'yyyy-MM-dd'),
+        lesson_time: selectedTime,
+        lesson_day: selectedDay,
+        student_email: studentEmailForParent,
+        amount: baseAmount
+      });
       
-      // Create the booking using the edge function with the fresh session token
+      // Create the booking using the edge function
       const { data: bookingData, error: bookingError } = await supabase.functions.invoke('create-booking', {
         body: {
           service_type: selectedService,
@@ -180,10 +175,7 @@ export const useBookingLogic = (language: string, user: any) => {
           lesson_day: selectedDay,
           student_email: studentEmailForParent,
           amount: baseAmount
-        },
-        headers: {
-          Authorization: `Bearer ${validSession.access_token}`,
-        },
+        }
       });
 
       if (bookingError) {
