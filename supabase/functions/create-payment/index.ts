@@ -26,11 +26,11 @@ serve(async (req) => {
     const finalAmount = Math.max(amount, minimumAmount);
     console.log("Using amount:", finalAmount, "pence (minimum required)");
 
-    // Retrieve authenticated user
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      throw new Error("Usuário não autenticado");
-    }
+    // Create Supabase client using the anon key for user authentication
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    );
 
     // Create Supabase client using the service role key for database operations
     const supabaseAdmin = createClient(
@@ -38,22 +38,31 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Create Supabase client using the anon key for user authentication
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-    );
+    // Retrieve authenticated user
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      throw new Error("Usuário não autenticado - cabeçalho de autorização ausente");
+    }
 
     const token = authHeader.replace("Bearer ", "");
-    const { data } = await supabaseClient.auth.getUser(token);
+    console.log("Authentication token received");
+    
+    const { data, error } = await supabaseClient.auth.getUser(token);
+    console.log("Auth response:", { user: data.user?.id, error: error?.message });
+    
+    if (error) {
+      console.error("Auth error:", error);
+      throw new Error("Erro de autenticação: " + error.message);
+    }
     
     if (!data.user?.id) {
-      throw new Error("Usuário não encontrado");
+      console.error("No user found in auth response");
+      throw new Error("Usuário não encontrado - sessão inválida");
     }
 
     const userId = data.user.id;
     const userEmail = data.user.email || "guest@example.com";
-    console.log("User authenticated:", userEmail);
+    console.log("User authenticated:", { userId, userEmail });
 
     // Check if Stripe secret key is available
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
