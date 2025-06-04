@@ -18,19 +18,13 @@ serve(async (req) => {
     console.log("Starting payment creation process");
 
     // Get request body
-    const { amount, currency = 'gbp', product_name, booking_details } = await req.json();
-    console.log("Request data:", { amount, currency, product_name, booking_details });
+    const { amount, currency = 'gbp', product_name, booking_details, user_info } = await req.json();
+    console.log("Request data:", { amount, currency, product_name, booking_details, user_info });
 
     // Stripe has a minimum amount requirement of £0.30 for GBP
     const minimumAmount = 30; // £0.30 = 30 pence
     const finalAmount = Math.max(amount, minimumAmount);
     console.log("Using amount:", finalAmount, "pence (minimum required)");
-
-    // Create Supabase client using the anon key for user authentication
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-    );
 
     // Create Supabase client using the service role key for database operations
     const supabaseAdmin = createClient(
@@ -38,30 +32,13 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Retrieve authenticated user
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      throw new Error("Usuário não autenticado - cabeçalho de autorização ausente");
+    // For mock authentication, we'll use the user_info passed in the request body
+    if (!user_info || !user_info.id || !user_info.email) {
+      throw new Error("Informações do usuário são obrigatórias");
     }
 
-    const token = authHeader.replace("Bearer ", "");
-    console.log("Authentication token received");
-    
-    const { data, error } = await supabaseClient.auth.getUser(token);
-    console.log("Auth response:", { user: data.user?.id, error: error?.message });
-    
-    if (error) {
-      console.error("Auth error:", error);
-      throw new Error("Erro de autenticação: " + error.message);
-    }
-    
-    if (!data.user?.id) {
-      console.error("No user found in auth response");
-      throw new Error("Usuário não encontrado - sessão inválida");
-    }
-
-    const userId = data.user.id;
-    const userEmail = data.user.email || "guest@example.com";
+    const userId = user_info.id;
+    const userEmail = user_info.email;
     console.log("User authenticated:", { userId, userEmail });
 
     // Check if Stripe secret key is available

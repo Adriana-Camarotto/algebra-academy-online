@@ -178,6 +178,10 @@ export const useBookingLogic = (language: string, user: any) => {
             time: selectedTime,
             student_email: studentEmailForParent,
             booked_by_parent: !!studentEmailForParent,
+          },
+          user_info: {
+            id: user.id,
+            email: user.email
           }
         }
       });
