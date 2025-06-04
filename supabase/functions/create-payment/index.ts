@@ -26,28 +26,34 @@ serve(async (req) => {
     const finalAmount = Math.max(amount, minimumAmount);
     console.log("Using amount:", finalAmount, "pence (minimum required)");
 
-    // Retrieve authenticated user (optional for one-time payments)
-    let userEmail = "guest@example.com";
+    // Retrieve authenticated user
     const authHeader = req.headers.get("Authorization");
-    
-    if (authHeader) {
-      try {
-        // Create Supabase client using the anon key for user authentication
-        const supabaseClient = createClient(
-          Deno.env.get("SUPABASE_URL") ?? "",
-          Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-        );
-
-        const token = authHeader.replace("Bearer ", "");
-        const { data } = await supabaseClient.auth.getUser(token);
-        if (data.user?.email) {
-          userEmail = data.user.email;
-          console.log("User authenticated:", userEmail);
-        }
-      } catch (error) {
-        console.log("User not authenticated, proceeding as guest:", error.message);
-      }
+    if (!authHeader) {
+      throw new Error("Usuário não autenticado");
     }
+
+    // Create Supabase client using the service role key for database operations
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
+    // Create Supabase client using the anon key for user authentication
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    );
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data } = await supabaseClient.auth.getUser(token);
+    
+    if (!data.user?.id) {
+      throw new Error("Usuário não encontrado");
+    }
+
+    const userId = data.user.id;
+    const userEmail = data.user.email || "guest@example.com";
+    console.log("User authenticated:", userEmail);
 
     // Check if Stripe secret key is available
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
@@ -61,6 +67,32 @@ serve(async (req) => {
     });
 
     console.log("Stripe initialized successfully");
+
+    // Create booking record in database first
+    const { data: bookingData, error: bookingError } = await supabaseAdmin
+      .from('bookings')
+      .insert({
+        user_id: userId,
+        lesson_date: booking_details.date,
+        lesson_time: booking_details.time,
+        lesson_day: booking_details.day,
+        service_type: booking_details.service,
+        lesson_type: booking_details.lesson_type,
+        amount: finalAmount,
+        currency: currency,
+        student_email: booking_details.student_email,
+        status: 'scheduled',
+        payment_status: 'pending'
+      })
+      .select()
+      .single();
+
+    if (bookingError) {
+      console.error("Error creating booking:", bookingError);
+      throw new Error("Erro ao criar agendamento: " + bookingError.message);
+    }
+
+    console.log("Booking created:", bookingData.id);
 
     // Check if a Stripe customer record exists for this user
     const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
@@ -92,9 +124,10 @@ serve(async (req) => {
         },
       ],
       mode: "payment",
-      success_url: `${req.headers.get("origin")}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${req.headers.get("origin")}/payment-success?session_id={CHECKOUT_SESSION_ID}&booking_id=${bookingData.id}`,
       cancel_url: `${req.headers.get("origin")}/booking`,
       metadata: {
+        booking_id: bookingData.id,
         booking_date: booking_details?.date || "",
         booking_day: booking_details?.day || "",
         booking_time: booking_details?.time || "",
@@ -103,6 +136,22 @@ serve(async (req) => {
     });
 
     console.log("Stripe session created successfully:", session.id);
+
+    // Update booking with payment intent
+    await supabaseAdmin
+      .from('bookings')
+      .update({ payment_intent_id: session.payment_intent })
+      .eq('id', bookingData.id);
+
+    // Log payment attempt
+    await supabaseAdmin
+      .from('payment_logs')
+      .insert({
+        booking_id: bookingData.id,
+        payment_intent_id: session.payment_intent,
+        status: 'session_created',
+        stripe_response: { session_id: session.id }
+      });
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

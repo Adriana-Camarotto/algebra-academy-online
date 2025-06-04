@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { format, startOfDay } from 'date-fns';
@@ -20,6 +21,9 @@ export const useBookingLogic = (language: string, user: any) => {
   const [showStudentEmailDialog, setShowStudentEmailDialog] = useState(false);
   const [studentEmail, setStudentEmail] = useState('');
 
+  // Dynamic data from database
+  const [bookedSlots, setBookedSlots] = useState<any>({});
+
   // Mock data for group session availability
   const groupSessionSpots = {
     'monday-9:00': { available: 2, total: 4 },
@@ -39,20 +43,6 @@ export const useBookingLogic = (language: string, user: any) => {
     'friday': ['9:00', '11:00', '15:00'],
   };
 
-  // Mock booked slots
-  const bookedSlots = {
-    '2025-01-27': { 'monday': ['9:00', '14:00'] },
-    '2025-01-28': { 'tuesday': ['11:00'] },
-    '2025-01-29': { 'wednesday': ['12:00'] },
-    '2025-01-30': { 'thursday': ['10:00'] },
-    '2025-01-31': { 'friday': ['15:00'] },
-    '2025-02-03': { 'monday': ['10:00'] },
-    '2025-02-04': { 'tuesday': ['13:00', '16:00'] },
-    '2025-02-05': { 'wednesday': ['9:00'] },
-    '2025-02-06': { 'thursday': ['14:00'] },
-    '2025-02-07': { 'friday': ['11:00'] },
-  };
-
   const dayMap = {
     1: 'monday',
     2: 'tuesday', 
@@ -60,6 +50,43 @@ export const useBookingLogic = (language: string, user: any) => {
     4: 'thursday',
     5: 'friday'
   };
+
+  // Load existing bookings
+  useEffect(() => {
+    const loadBookings = async () => {
+      try {
+        const { data: bookings, error } = await supabase
+          .from('bookings')
+          .select('lesson_date, lesson_day, lesson_time, status')
+          .in('status', ['scheduled'])
+          .gte('lesson_date', format(new Date(), 'yyyy-MM-dd'));
+
+        if (error) {
+          console.error('Error loading bookings:', error);
+          return;
+        }
+
+        // Convert bookings to bookedSlots format
+        const slots: any = {};
+        bookings?.forEach(booking => {
+          const dateStr = booking.lesson_date;
+          if (!slots[dateStr]) {
+            slots[dateStr] = {};
+          }
+          if (!slots[dateStr][booking.lesson_day]) {
+            slots[dateStr][booking.lesson_day] = [];
+          }
+          slots[dateStr][booking.lesson_day].push(booking.lesson_time);
+        });
+
+        setBookedSlots(slots);
+      } catch (error) {
+        console.error('Error loading bookings:', error);
+      }
+    };
+
+    loadBookings();
+  }, []);
 
   // Get weekday from date
   const getWeekdayFromDate = (date: Date): string | null => {
@@ -129,6 +156,10 @@ export const useBookingLogic = (language: string, user: any) => {
     setIsProcessing(true);
 
     try {
+      if (!user) {
+        throw new Error('Usuário não autenticado');
+      }
+
       // Service pricing - Stripe minimum is £0.30 (30 pence)
       const baseAmount = 30; // £0.30 = 30 pence (Stripe minimum)
       

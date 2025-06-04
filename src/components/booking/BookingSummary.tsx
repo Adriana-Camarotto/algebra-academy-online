@@ -1,29 +1,22 @@
 
 import React from 'react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
-import { CreditCard, Calendar, Clock, User } from 'lucide-react';
-
-interface Service {
-  id: string;
-  name: string;
-  price: string;
-  duration: string;
-}
 
 interface BookingSummaryProps {
   language: string;
-  services: Service[];
+  services: any[];
   selectedService: string | null;
   lessonType: 'single' | 'recurring' | null;
   selectedDate: Date | undefined;
   selectedTime: string | null;
   termsAccepted: boolean;
   isProcessing: boolean;
-  onTermsChange: (checked: boolean) => void;
+  onTermsChange: (value: boolean) => void;
   onConfirmBooking: () => void;
   onPrevious: () => void;
 }
@@ -39,185 +32,145 @@ const BookingSummary: React.FC<BookingSummaryProps> = ({
   isProcessing,
   onTermsChange,
   onConfirmBooking,
-  onPrevious
+  onPrevious,
 }) => {
   const selectedServiceData = services.find(s => s.id === selectedService);
 
+  // Format date based on language
+  const formatBookingDate = (date: Date) => {
+    return language === 'en'
+      ? format(date, 'EEEE, MMMM d, yyyy')
+      : format(date, "EEEE, d 'de' MMMM 'de' yyyy");
+  };
+
   return (
-    <div className="grid md:grid-cols-2 gap-6">
+    <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-primary" />
-            {language === 'en' ? 'Booking Summary' : 'Resumo da Reserva'}
+          <CardTitle>
+            {language === 'en' ? 'Booking Summary' : 'Resumo do Agendamento'}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <User className="h-4 w-4 mt-1 text-gray-500" />
-              <div>
-                <p className="text-sm text-gray-500">
-                  {language === 'en' ? 'Service' : 'Serviço'}:
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Service Details */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">
+                {language === 'en' ? 'Service Details' : 'Detalhes do Serviço'}
+              </h3>
+              <div className="space-y-2">
+                <p className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    {language === 'en' ? 'Service:' : 'Serviço:'}
+                  </span>
+                  <span>{selectedServiceData?.name}</span>
                 </p>
-                <p className="font-medium">{selectedServiceData?.name}</p>
-                {selectedService === 'group' && (
-                  <p className="text-xs text-blue-600">
-                    {language === 'en' ? '6 classes total, 60 minutes each' : '6 aulas no total, 60 minutos cada'}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {selectedService === 'individual' && lessonType && (
-              <div className="flex items-start gap-3">
-                <Clock className="h-4 w-4 mt-1 text-gray-500" />
-                <div>
-                  <p className="text-sm text-gray-500">
-                    {language === 'en' ? 'Lesson Type' : 'Tipo de Aula'}:
-                  </p>
-                  <p className="font-medium">
-                    {lessonType === 'single' 
-                      ? (language === 'en' ? 'Single Lesson' : 'Aula Única')
-                      : (language === 'en' ? 'Recurring Lessons' : 'Aulas Recorrentes')}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            <div className="flex items-start gap-3">
-              <Clock className="h-4 w-4 mt-1 text-gray-500" />
-              <div>
-                <p className="text-sm text-gray-500">
-                  {language === 'en' ? 'Duration' : 'Duração'}:
+                <p className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    {language === 'en' ? 'Type:' : 'Tipo:'}
+                  </span>
+                  <span>
+                    {lessonType === 'single'
+                      ? language === 'en' ? 'Single Lesson' : 'Aula Única'
+                      : language === 'en' ? 'Recurring Lessons' : 'Aulas Recorrentes'}
+                  </span>
                 </p>
-                <p className="font-medium">{selectedServiceData?.duration}</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3">
-              <Calendar className="h-4 w-4 mt-1 text-gray-500" />
-              <div>
-                <p className="text-sm text-gray-500">
-                  {language === 'en' ? 'Date' : 'Data'}:
-                </p>
-                <p className="font-medium">
-                  {selectedDate ? format(selectedDate, 'PPP') : (language === 'en' ? 'Not selected' : 'Não selecionado')}
+                <p className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    {language === 'en' ? 'Duration:' : 'Duração:'}
+                  </span>
+                  <span>{selectedServiceData?.duration}</span>
                 </p>
               </div>
             </div>
 
-            <div className="flex items-start gap-3">
-              <Clock className="h-4 w-4 mt-1 text-gray-500" />
-              <div>
-                <p className="text-sm text-gray-500">
-                  {language === 'en' ? 'Time' : 'Horário'}:
+            {/* Schedule Details */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">
+                {language === 'en' ? 'Schedule Details' : 'Detalhes do Horário'}
+              </h3>
+              <div className="space-y-2">
+                <p className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    {language === 'en' ? 'Date:' : 'Data:'}
+                  </span>
+                  <span>{selectedDate ? formatBookingDate(selectedDate) : '-'}</span>
                 </p>
-                <p className="font-medium">
-                  {selectedTime || (language === 'en' ? 'Not selected' : 'Não selecionado')}
+                <p className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    {language === 'en' ? 'Time:' : 'Horário:'}
+                  </span>
+                  <span>{selectedTime || '-'}</span>
                 </p>
-              </div>
-            </div>
-
-            <div className="border-t pt-4">
-              <div className="flex items-start gap-3">
-                <CreditCard className="h-4 w-4 mt-1 text-green-600" />
-                <div>
-                  <p className="text-sm text-gray-500">
-                    {language === 'en' ? 'Price' : 'Preço'}:
-                  </p>
-                  <p className="font-bold text-green-600 text-lg">£0.30</p>
-                  <p className="text-xs text-gray-500">
-                    {language === 'en' 
-                      ? 'Minimum payment amount required by Stripe'
-                      : 'Valor mínimo de pagamento exigido pelo Stripe'}
-                  </p>
-                  {lessonType === 'recurring' && (
-                    <p className="text-xs text-amber-600">
-                      {language === 'en' 
-                        ? 'First payment now, then weekly automatically'
-                        : 'Primeiro pagamento agora, depois semanalmente automaticamente'}
-                    </p>
-                  )}
-                </div>
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5 text-primary" />
-            {language === 'en' ? 'Terms & Payment' : 'Termos e Pagamento'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h4 className="font-medium text-sm mb-2">
-              {language === 'en' ? 'Refunds & Cancellations Policy' : 'Política de Reembolsos e Cancelamentos'}
-            </h4>
-            <div className="text-xs text-gray-600 space-y-2">
-              <p>
+          <Separator />
+
+          {/* Payment Details */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">
+              {language === 'en' ? 'Payment Details' : 'Detalhes do Pagamento'}
+            </h3>
+            <div className="space-y-2">
+              <p className="flex justify-between">
+                <span className="text-muted-foreground">
+                  {language === 'en' ? 'Price:' : 'Preço:'}
+                </span>
+                <span>{selectedServiceData?.price}</span>
+              </p>
+              <p className="text-sm text-muted-foreground">
                 {language === 'en' 
-                  ? 'Please note that refunds are not available.'
-                  : 'Por favor, note que reembolsos não estão disponíveis.'}
-              </p>
-              <p>
-                {language === 'en'
-                  ? 'If for any reason you are unable to attend the class then you must contact us before the class start time for the option to have it rescheduled to either of the 2 following weeks.'
-                  : 'Se por qualquer motivo você não puder comparecer à aula, deve nos contatar antes do horário de início da aula para ter a opção de reagendá-la para qualquer uma das 2 semanas seguintes.'}
-              </p>
-              <p>
-                {language === 'en'
-                  ? 'Only one rescheduling of an individual class pass is permitted and we will only reschedule a class like for like.'
-                  : 'Apenas um reagendamento de uma aula individual é permitido e só reagendaremos uma aula igual por igual.'}
-              </p>
-              <p>
-                {language === 'en'
-                  ? 'Workshops and special sessions cannot be rescheduled due to the nature of the event.'
-                  : 'Workshops e sessões especiais não podem ser reagendados devido à natureza do evento.'}
+                  ? 'Payment will be processed 24 hours before your lesson. You can cancel up to 24 hours before the scheduled time without charge.' 
+                  : 'O pagamento será processado 24 horas antes da sua aula. Você pode cancelar até 24 horas antes do horário agendado sem custos.'}
               </p>
             </div>
           </div>
-          
-          <div className="flex items-start space-x-2">
-            <Checkbox 
-              id="terms" 
-              checked={termsAccepted}
-              onCheckedChange={onTermsChange}
-            />
-            <Label htmlFor="terms" className="text-xs leading-relaxed">
-              {language === 'en'
-                ? 'I have read and agree to the terms above *'
-                : 'Li e concordo com os termos acima *'}
-            </Label>
+
+          <Separator />
+
+          {/* Terms and Conditions */}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="terms" 
+                checked={termsAccepted} 
+                onCheckedChange={(checked) => onTermsChange(!!checked)} 
+              />
+              <Label htmlFor="terms" className="text-sm">
+                {language === 'en' 
+                  ? 'I agree to the terms and conditions, including the cancellation policy' 
+                  : 'Eu concordo com os termos e condições, incluindo a política de cancelamento'}
+              </Label>
+            </div>
           </div>
         </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={onPrevious}>
-            {language === 'en' ? 'Back' : 'Voltar'}
-          </Button>
-          <Button 
-            onClick={onConfirmBooking}
-            disabled={!termsAccepted || isProcessing}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            {isProcessing ? (
-              <>
-                <CreditCard className="h-4 w-4 mr-2 animate-pulse" />
-                {language === 'en' ? 'Processing...' : 'Processando...'}
-              </>
-            ) : (
-              <>
-                <CreditCard className="h-4 w-4 mr-2" />
-                {language === 'en' ? 'Pay £0.30 & Book' : 'Pagar £0.30 & Reservar'}
-              </>
-            )}
-          </Button>
-        </CardFooter>
       </Card>
+
+      {/* Action Buttons */}
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={onPrevious} disabled={isProcessing}>
+          {language === 'en' ? 'Previous' : 'Anterior'}
+        </Button>
+        <Button 
+          onClick={onConfirmBooking} 
+          disabled={!termsAccepted || isProcessing}
+          className="min-w-[180px]"
+        >
+          {isProcessing ? (
+            <span className="flex items-center">
+              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              {language === 'en' ? 'Processing...' : 'Processando...'}
+            </span>
+          ) : (
+            language === 'en' ? 'Pay and Book Lesson' : 'Pagar e Agendar Aula'
+          )}
+        </Button>
+      </div>
     </div>
   );
 };
