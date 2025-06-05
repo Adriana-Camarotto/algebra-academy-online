@@ -31,7 +31,10 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       language: 'en',
-      login: (user) => set({ user, isAuthenticated: true }),
+      login: (user) => {
+        console.log('Logging in user:', user);
+        set({ user, isAuthenticated: true });
+      },
       logout: () => set({ user: null, isAuthenticated: false }),
       setLanguage: (language) => set({ language }),
     }),
@@ -97,4 +100,27 @@ export const mockUsers: Record<string, User> = {
     role: 'service',
     avatar: 'https://ui-avatars.com/api/?name=Eve+Service&background=009688&color=fff',
   },
+};
+
+// Helper function to resolve mock user by key or return full user object
+export const resolveUser = (userOrKey: User | string): User | null => {
+  if (!userOrKey) return null;
+  
+  // If it's already a User object with proper UUID, return it
+  if (typeof userOrKey === 'object' && userOrKey.id && userOrKey.id.includes('-')) {
+    console.log('User already resolved with UUID:', userOrKey.id);
+    return userOrKey;
+  }
+  
+  // If it's a mock key, resolve to the actual user object
+  if (typeof userOrKey === 'string') {
+    const resolvedUser = mockUsers[userOrKey];
+    if (resolvedUser) {
+      console.log('Resolved mock key', userOrKey, 'to UUID:', resolvedUser.id);
+      return resolvedUser;
+    }
+  }
+  
+  console.error('Could not resolve user:', userOrKey);
+  return null;
 };

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuthStore, UserRole, mockUsers } from '@/lib/auth';
+import { useAuthStore, UserRole, mockUsers, resolveUser } from '@/lib/auth';
 import { t } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,14 +54,28 @@ const LoginPage: React.FC = () => {
       );
       
       if (user) {
-        login(user);
-        toast({
-          title: `${t('welcome', language)}, ${user.name}!`,
-          description: language === 'en' 
-            ? 'You have successfully logged in.'
-            : 'Você entrou com sucesso.',
-        });
-        navigate(from, { replace: true });
+        // Ensure we're logging in with the proper user object with UUID
+        const resolvedUser = resolveUser(user);
+        if (resolvedUser) {
+          console.log('Login successful with UUID:', resolvedUser.id);
+          login(resolvedUser);
+          toast({
+            title: `${t('welcome', language)}, ${resolvedUser.name}!`,
+            description: language === 'en' 
+              ? 'You have successfully logged in.'
+              : 'Você entrou com sucesso.',
+          });
+          navigate(from, { replace: true });
+        } else {
+          console.error('Failed to resolve user during login');
+          toast({
+            title: language === 'en' ? 'Error' : 'Erro',
+            description: language === 'en'
+              ? 'Authentication error. Please try again.'
+              : 'Erro de autenticação. Por favor, tente novamente.',
+            variant: "destructive",
+          });
+        }
       } else {
         toast({
           title: language === 'en' ? 'Error' : 'Erro',

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { format, startOfDay } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
+import { resolveUser } from '@/lib/auth';
 
 export const useBookingLogic = (language: string, user: any) => {
   const { toast } = useToast();
@@ -156,15 +157,19 @@ export const useBookingLogic = (language: string, user: any) => {
     setIsProcessing(true);
 
     try {
-      if (!user) {
-        throw new Error('Usuário não autenticado');
+      // Resolve the user to ensure we have the proper UUID
+      const resolvedUser = resolveUser(user);
+      if (!resolvedUser) {
+        throw new Error('Usuário não autenticado ou inválido');
       }
+
+      console.log('Resolved user for booking:', resolvedUser);
 
       // Service pricing - Stripe minimum is £0.30 (30 pence)
       const baseAmount = 30; // £0.30 = 30 pence (Stripe minimum)
       
       console.log('Processing booking with student email:', studentEmailForParent);
-      console.log('User object:', user);
+      console.log('Resolved user object:', resolvedUser);
       
       const { data, error } = await supabase.functions.invoke('create-payment', {
         body: {
@@ -181,8 +186,8 @@ export const useBookingLogic = (language: string, user: any) => {
             booked_by_parent: !!studentEmailForParent,
           },
           user_info: {
-            id: user.id, // This should now be the UUID, not the mock key
-            email: user.email
+            id: resolvedUser.id, // Now guaranteed to be a proper UUID
+            email: resolvedUser.email
           }
         }
       });
