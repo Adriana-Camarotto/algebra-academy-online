@@ -164,6 +164,7 @@ export const useBookingLogic = (language: string, user: any) => {
       const baseAmount = 30; // £0.30 = 30 pence (Stripe minimum)
       
       console.log('Processing booking with student email:', studentEmailForParent);
+      console.log('User object:', user);
       
       const { data, error } = await supabase.functions.invoke('create-payment', {
         body: {
@@ -180,7 +181,7 @@ export const useBookingLogic = (language: string, user: any) => {
             booked_by_parent: !!studentEmailForParent,
           },
           user_info: {
-            id: user.id,
+            id: user.id, // This should now be the UUID, not the mock key
             email: user.email
           }
         }
