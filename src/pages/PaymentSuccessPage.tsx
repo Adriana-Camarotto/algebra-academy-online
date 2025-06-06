@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { useAuthStore } from '@/lib/auth';
@@ -13,7 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const PaymentSuccessPage = () => {
-  const { language } = useAuthStore();
+  const { language, user } = useAuthStore();
   const { toast } = useToast();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
@@ -26,8 +25,8 @@ const PaymentSuccessPage = () => {
 
   useEffect(() => {
     const getBookingDetails = async () => {
-      console.log('PaymentSuccess: Starting booking lookup', { sessionId, bookingId });
-      setDebugInfo({ sessionId, bookingId, step: 'starting' });
+      console.log('PaymentSuccess: Starting booking lookup', { sessionId, bookingId, user });
+      setDebugInfo({ sessionId, bookingId, step: 'starting', currentUser: user });
 
       if (!bookingId) {
         console.log('PaymentSuccess: No booking ID provided');
@@ -36,11 +35,47 @@ const PaymentSuccessPage = () => {
         return;
       }
 
-      try {
-        console.log('PaymentSuccess: Fetching booking with ID:', bookingId);
-        setDebugInfo(prev => ({ ...prev, step: 'fetching', bookingId }));
+      // Check if user is authenticated
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      console.log('PaymentSuccess: Session check:', { session: session?.user, sessionError });
+      setDebugInfo(prev => ({ ...prev, sessionCheck: { session: session?.user, sessionError } }));
 
-        // Try to fetch the booking using the service role to bypass RLS temporarily
+      if (!session?.user) {
+        console.log('PaymentSuccess: User not authenticated');
+        setDebugInfo(prev => ({ ...prev, authError: 'User not authenticated' }));
+        
+        // Try to fetch without auth first to see if RLS is the issue
+        try {
+          console.log('PaymentSuccess: Attempting to fetch booking without auth context');
+          const { data: publicData, error: publicError } = await supabase
+            .from('bookings')
+            .select('*')
+            .eq('id', bookingId)
+            .maybeSingle();
+          
+          setDebugInfo(prev => ({ 
+            ...prev, 
+            publicFetchAttempt: { data: publicData, error: publicError },
+            step: 'public_fetch_attempted'
+          }));
+        } catch (error) {
+          console.error('PaymentSuccess: Public fetch failed:', error);
+          setDebugInfo(prev => ({ ...prev, publicFetchError: error }));
+        }
+        
+        setLoading(false);
+        return;
+      }
+
+      try {
+        console.log('PaymentSuccess: Fetching booking with authenticated user:', session.user.id);
+        setDebugInfo(prev => ({ 
+          ...prev, 
+          step: 'fetching_authenticated', 
+          authenticatedUserId: session.user.id,
+          bookingId 
+        }));
+
         const { data, error } = await supabase
           .from('bookings')
           .select('*')
@@ -48,7 +83,12 @@ const PaymentSuccessPage = () => {
           .maybeSingle();
 
         console.log('PaymentSuccess: Database response:', { data, error });
-        setDebugInfo(prev => ({ ...prev, dbResponse: { data, error }, step: 'response_received' }));
+        setDebugInfo(prev => ({ 
+          ...prev, 
+          dbResponse: { data, error }, 
+          step: 'response_received',
+          queryUserId: session.user.id 
+        }));
 
         if (error) {
           console.error('PaymentSuccess: Database error:', error);
@@ -66,7 +106,12 @@ const PaymentSuccessPage = () => {
         if (data) {
           console.log('PaymentSuccess: Booking found:', data);
           setBooking(data);
-          setDebugInfo(prev => ({ ...prev, bookingFound: true, booking: data }));
+          setDebugInfo(prev => ({ 
+            ...prev, 
+            bookingFound: true, 
+            booking: data,
+            userMatch: data.user_id === session.user.id 
+          }));
           
           // Update booking status to confirm payment if needed
           if (data.payment_status === 'pending') {
@@ -85,6 +130,22 @@ const PaymentSuccessPage = () => {
         } else {
           console.log('PaymentSuccess: No booking found with ID:', bookingId);
           setDebugInfo(prev => ({ ...prev, bookingFound: false }));
+          
+          // Additional debug: try to find any booking with this ID across all users (admin query)
+          try {
+            console.log('PaymentSuccess: Attempting admin query to find booking');
+            const { data: adminData, error: adminError } = await supabase
+              .rpc('get_booking_by_id', { booking_id: bookingId })
+              .maybeSingle();
+            
+            setDebugInfo(prev => ({ 
+              ...prev, 
+              adminQuery: { data: adminData, error: adminError }
+            }));
+          } catch (adminError) {
+            console.log('PaymentSuccess: Admin query not available:', adminError);
+            setDebugInfo(prev => ({ ...prev, adminQueryError: adminError }));
+          }
         }
       } catch (error) {
         console.error('PaymentSuccess: Unexpected error:', error);
@@ -95,7 +156,7 @@ const PaymentSuccessPage = () => {
     };
 
     getBookingDetails();
-  }, [bookingId, language, toast]);
+  }, [bookingId, language, toast, user]);
 
   // Get service name
   const getServiceName = (serviceType: string) => {
@@ -242,12 +303,12 @@ const PaymentSuccessPage = () => {
                     : 'Detalhes do agendamento não encontrados. Seu pagamento pode ter sido processado com sucesso, mas não conseguimos encontrar o agendamento correspondente.'}
                 </p>
                 
-                {/* Debug Information */}
+                {/* Enhanced Debug Information */}
                 <details className="text-left bg-gray-50 p-4 rounded-lg mb-4">
                   <summary className="cursor-pointer text-sm font-medium mb-2">
                     Debug Information (Click to expand)
                   </summary>
-                  <pre className="text-xs bg-white p-2 rounded border overflow-auto">
+                  <pre className="text-xs bg-white p-2 rounded border overflow-auto max-h-96">
                     {JSON.stringify(debugInfo, null, 2)}
                   </pre>
                 </details>
