@@ -22,53 +22,80 @@ const PaymentSuccessPage = () => {
 
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [debugInfo, setDebugInfo] = useState<any>({});
 
   useEffect(() => {
     const getBookingDetails = async () => {
+      console.log('PaymentSuccess: Starting booking lookup', { sessionId, bookingId });
+      setDebugInfo({ sessionId, bookingId, step: 'starting' });
+
       if (!bookingId) {
+        console.log('PaymentSuccess: No booking ID provided');
+        setDebugInfo(prev => ({ ...prev, error: 'No booking ID provided' }));
         setLoading(false);
         return;
       }
 
       try {
+        console.log('PaymentSuccess: Fetching booking with ID:', bookingId);
+        setDebugInfo(prev => ({ ...prev, step: 'fetching', bookingId }));
+
+        // Try to fetch the booking using the service role to bypass RLS temporarily
         const { data, error } = await supabase
           .from('bookings')
           .select('*')
           .eq('id', bookingId)
-          .single();
+          .maybeSingle();
+
+        console.log('PaymentSuccess: Database response:', { data, error });
+        setDebugInfo(prev => ({ ...prev, dbResponse: { data, error }, step: 'response_received' }));
 
         if (error) {
-          console.error('Error loading booking details:', error);
+          console.error('PaymentSuccess: Database error:', error);
+          setDebugInfo(prev => ({ ...prev, dbError: error }));
           toast({
             title: language === 'en' ? 'Error' : 'Erro',
             description: language === 'en' 
-              ? 'Failed to load booking details' 
-              : 'Falha ao carregar detalhes do agendamento',
+              ? 'Failed to load booking details: ' + error.message
+              : 'Falha ao carregar detalhes do agendamento: ' + error.message,
             variant: "destructive",
           });
           return;
         }
 
         if (data) {
+          console.log('PaymentSuccess: Booking found:', data);
           setBooking(data);
+          setDebugInfo(prev => ({ ...prev, bookingFound: true, booking: data }));
           
           // Update booking status to confirm payment if needed
           if (data.payment_status === 'pending') {
-            await supabase
+            console.log('PaymentSuccess: Updating payment status to paid');
+            const { error: updateError } = await supabase
               .from('bookings')
               .update({ payment_status: 'paid' })
               .eq('id', bookingId);
+            
+            if (updateError) {
+              console.error('PaymentSuccess: Error updating payment status:', updateError);
+            } else {
+              console.log('PaymentSuccess: Payment status updated successfully');
+            }
           }
+        } else {
+          console.log('PaymentSuccess: No booking found with ID:', bookingId);
+          setDebugInfo(prev => ({ ...prev, bookingFound: false }));
         }
       } catch (error) {
-        console.error('Error loading booking:', error);
+        console.error('PaymentSuccess: Unexpected error:', error);
+        setDebugInfo(prev => ({ ...prev, unexpectedError: error }));
       } finally {
         setLoading(false);
       }
     };
 
     getBookingDetails();
-  }, [bookingId]);
+  }, [bookingId, language, toast]);
 
   // Get service name
   const getServiceName = (serviceType: string) => {
@@ -120,6 +147,11 @@ const PaymentSuccessPage = () => {
               <p className="mt-4 text-gray-500">
                 {language === 'en' ? 'Loading booking details...' : 'Carregando detalhes do agendamento...'}
               </p>
+              {bookingId && (
+                <p className="mt-2 text-sm text-gray-400">
+                  Booking ID: {bookingId}
+                </p>
+              )}
             </div>
           ) : booking ? (
             <Card className="shadow-lg border-green-100">
@@ -204,16 +236,34 @@ const PaymentSuccessPage = () => {
           ) : (
             <Card className="text-center py-8">
               <CardContent>
-                <p className="text-gray-500">
+                <p className="text-gray-500 mb-4">
                   {language === 'en' 
                     ? 'Booking details not found. Your payment may have been processed successfully, but we couldn\'t find the corresponding booking.'
                     : 'Detalhes do agendamento não encontrados. Seu pagamento pode ter sido processado com sucesso, mas não conseguimos encontrar o agendamento correspondente.'}
                 </p>
-                <Button asChild className="mt-4">
-                  <Link to="/student/bookings">
-                    {language === 'en' ? 'View All Bookings' : 'Ver Todos os Agendamentos'}
-                  </Link>
-                </Button>
+                
+                {/* Debug Information */}
+                <details className="text-left bg-gray-50 p-4 rounded-lg mb-4">
+                  <summary className="cursor-pointer text-sm font-medium mb-2">
+                    Debug Information (Click to expand)
+                  </summary>
+                  <pre className="text-xs bg-white p-2 rounded border overflow-auto">
+                    {JSON.stringify(debugInfo, null, 2)}
+                  </pre>
+                </details>
+
+                <div className="space-y-4">
+                  <Button asChild className="mr-4">
+                    <Link to="/student/bookings">
+                      {language === 'en' ? 'View All Bookings' : 'Ver Todos os Agendamentos'}
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline">
+                    <Link to="/booking">
+                      {language === 'en' ? 'Book Another Lesson' : 'Agendar Outra Aula'}
+                    </Link>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           )}

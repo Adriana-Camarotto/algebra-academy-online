@@ -78,7 +78,7 @@ serve(async (req) => {
       throw new Error("Erro ao criar agendamento: " + bookingError.message);
     }
 
-    console.log("Booking created:", bookingData.id);
+    console.log("Booking created successfully:", bookingData.id);
 
     // Check if a Stripe customer record exists for this user
     const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
@@ -123,11 +123,18 @@ serve(async (req) => {
 
     console.log("Stripe session created successfully:", session.id);
 
-    // Update booking with payment intent
-    await supabaseAdmin
+    // Update booking with payment intent and session info
+    const { error: updateError } = await supabaseAdmin
       .from('bookings')
-      .update({ payment_intent_id: session.payment_intent })
+      .update({ 
+        payment_intent_id: session.payment_intent,
+        payment_status: 'pending'
+      })
       .eq('id', bookingData.id);
+
+    if (updateError) {
+      console.error("Error updating booking with payment intent:", updateError);
+    }
 
     // Log payment attempt
     await supabaseAdmin
@@ -136,8 +143,13 @@ serve(async (req) => {
         booking_id: bookingData.id,
         payment_intent_id: session.payment_intent,
         status: 'session_created',
-        stripe_response: { session_id: session.id }
+        stripe_response: { 
+          session_id: session.id,
+          checkout_url: session.url 
+        }
       });
+
+    console.log("Payment session created and logged successfully");
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
