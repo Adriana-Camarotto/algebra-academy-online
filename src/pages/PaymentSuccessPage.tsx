@@ -50,7 +50,12 @@ const PaymentSuccessPage = () => {
   useEffect(() => {
     const getBookingDetails = async () => {
       console.log('PaymentSuccess: Starting booking lookup', { sessionId, bookingId, user });
-      setDebugInfo({ sessionId: sessionId || undefined, bookingId: bookingId || undefined, step: 'starting', currentUser: user });
+      setDebugInfo({ 
+        sessionId: sessionId || undefined, 
+        bookingId: bookingId || undefined, 
+        step: 'starting', 
+        currentUser: user 
+      });
 
       if (!bookingId) {
         console.log('PaymentSuccess: No booking ID provided');
