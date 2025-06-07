@@ -102,7 +102,6 @@ const PaymentSuccessPage = () => {
           ...prev, 
           step: 'fetching_authenticated', 
           authenticatedUserId: session.user.id,
-          bookingId: bookingId || undefined,
           authStoreUser: user
         }));
 
