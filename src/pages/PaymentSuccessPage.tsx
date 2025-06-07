@@ -11,6 +11,30 @@ import Footer from '@/components/Footer';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+interface DebugInfo {
+  sessionId?: string;
+  bookingId?: string;
+  step?: string;
+  currentUser?: any;
+  error?: string;
+  sessionCheck?: any;
+  authError?: string;
+  publicFetchAttempt?: any;
+  publicFetchError?: any;
+  authenticatedUserId?: string;
+  authStoreUser?: any;
+  dbResponse?: any;
+  queryUserId?: string;
+  userIdMatch?: string | boolean;
+  dbError?: any;
+  bookingFound?: boolean;
+  booking?: any;
+  userMatch?: boolean;
+  adminQuery?: any;
+  adminQueryError?: any;
+  unexpectedError?: any;
+}
+
 const PaymentSuccessPage = () => {
   const { language, user } = useAuthStore();
   const { toast } = useToast();
@@ -21,7 +45,7 @@ const PaymentSuccessPage = () => {
 
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [debugInfo, setDebugInfo] = useState<any>({});
+  const [debugInfo, setDebugInfo] = useState<DebugInfo>({});
 
   useEffect(() => {
     const getBookingDetails = async () => {
