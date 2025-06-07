@@ -73,7 +73,8 @@ const PaymentSuccessPage = () => {
           ...prev, 
           step: 'fetching_authenticated', 
           authenticatedUserId: session.user.id,
-          bookingId 
+          bookingId,
+          authStoreUser: user
         }));
 
         const { data, error } = await supabase
@@ -87,7 +88,8 @@ const PaymentSuccessPage = () => {
           ...prev, 
           dbResponse: { data, error }, 
           step: 'response_received',
-          queryUserId: session.user.id 
+          queryUserId: session.user.id,
+          userIdMatch: data ? data.user_id === session.user.id : 'no_data_to_compare'
         }));
 
         if (error) {
