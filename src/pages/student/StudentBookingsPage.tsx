@@ -124,15 +124,17 @@ const StudentBookingsPage = () => {
   const getPaymentStatusColor = (status: string) => {
     switch (status) {
       case 'paid':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
       case 'cancelled':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
       case 'failed':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      case 'refunded':
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
     }
   };
 
@@ -146,6 +148,8 @@ const StudentBookingsPage = () => {
         return language === 'en' ? 'Cancelled' : 'Cancelado';
       case 'failed':
         return language === 'en' ? 'Failed' : 'Falhou';
+      case 'refunded':
+        return language === 'en' ? 'Refunded' : 'Reembolsado';
       default:
         return status;
     }
@@ -154,13 +158,15 @@ const StudentBookingsPage = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'scheduled':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
       case 'cancelled':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
       case 'completed':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      case 'confirmed':
+        return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
     }
   };
 
@@ -172,6 +178,8 @@ const StudentBookingsPage = () => {
         return language === 'en' ? 'Cancelled' : 'Cancelada';
       case 'completed':
         return language === 'en' ? 'Completed' : 'Concluída';
+      case 'confirmed':
+        return language === 'en' ? 'Confirmed' : 'Confirmada';
       default:
         return status;
     }
@@ -324,9 +332,16 @@ const StudentBookingsPage = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className={getStatusColor(booking.status)}>
-                          {getStatusText(booking.status)}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge className={getStatusColor(booking.status)}>
+                            {getStatusText(booking.status)}
+                          </Badge>
+                          {booking.payment_status === 'paid' && booking.status === 'scheduled' && (
+                            <Badge variant="outline" className="text-xs">
+                              {language === 'en' ? 'Ready' : 'Pronta'}
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <Badge className={getPaymentStatusColor(booking.payment_status)}>
@@ -346,7 +361,7 @@ const StudentBookingsPage = () => {
                               <Button 
                                 variant="outline" 
                                 size="sm" 
-                                className="text-red-600 hover:text-re d-700"
+                                className="text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50"
                                 disabled={cancelling === booking.id}
                               >
                                 {cancelling === booking.id ? (
@@ -354,6 +369,9 @@ const StudentBookingsPage = () => {
                                 ) : (
                                   <Trash2 className="h-4 w-4" />
                                 )}
+                                <span className="ml-1 text-xs">
+                                  {language === 'en' ? 'Cancel' : 'Cancelar'}
+                                </span>
                               </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
