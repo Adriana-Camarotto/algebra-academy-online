@@ -161,21 +161,8 @@ const PaymentSuccessPage = () => {
           console.log('PaymentSuccess: No booking found with ID:', bookingId);
           setDebugInfo(prev => ({ ...prev, bookingFound: false }));
           
-          // Additional debug: try to find any booking with this ID across all users (admin query)
-          try {
-            console.log('PaymentSuccess: Attempting admin query to find booking');
-            const { data: adminData, error: adminError } = await supabase
-              .rpc('get_booking_by_id', { booking_id: bookingId })
-              .maybeSingle();
-            
-            setDebugInfo(prev => ({ 
-              ...prev, 
-              adminQuery: { data: adminData, error: adminError }
-            }));
-          } catch (adminError) {
-            console.log('PaymentSuccess: Admin query not available:', adminError);
-            setDebugInfo(prev => ({ ...prev, adminQueryError: adminError }));
-          }
+          // Note: No admin query available as RPC function doesn't exist
+          setDebugInfo(prev => ({ ...prev, adminQuery: 'Not available - RPC function does not exist' }));
         }
       } catch (error) {
         console.error('PaymentSuccess: Unexpected error:', error);
