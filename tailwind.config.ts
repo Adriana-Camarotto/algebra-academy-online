@@ -75,9 +75,9 @@ export default {
           900: "#001433",
         },
         tutor: {
-          primary: "#4267ac",
-          secondary: "#7e57c2",
-          accent: "#00bcd4",
+          primary: "#ff8933",
+          secondary: "#e6751a",
+          accent: "#9acd32",
           light: "#f5f7fa",
           dark: "#263238",
         },
@@ -164,8 +164,8 @@ export default {
         "spin-slow": "spin-slow 8s linear infinite",
       },
       backgroundImage: {
-        'hero-pattern': 'linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%)',
-        'math-gradient': 'linear-gradient(90deg, rgba(66,103,172,1) 0%, rgba(126,87,194,1) 100%)',
+        'hero-pattern': 'linear-gradient(120deg, #ff8933 0%, #e6751a 100%)',
+        'math-gradient': 'linear-gradient(90deg, #ff8933 0%, #e6751a 100%)',
       },
     },
   },
