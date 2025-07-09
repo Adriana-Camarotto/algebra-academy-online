@@ -164,8 +164,8 @@ export default {
         "spin-slow": "spin-slow 8s linear infinite",
       },
       backgroundImage: {
-        'hero-pattern': 'linear-gradient(120deg, #ff8933 0%, #e6751a 100%)',
-        'math-gradient': 'linear-gradient(90deg, #ff8933 0%, #e6751a 100%)',
+        'hero-pattern': 'linear-gradient(120deg, #ff1387 0%, #d10968 100%)',
+        'math-gradient': 'linear-gradient(90deg, #ff1387 0%, #d10968 100%)',
       },
     },
   },
