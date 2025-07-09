@@ -1,29 +1,37 @@
-
-import React from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { useAuthStore, hasRole } from '@/lib/auth';
-import { LogOut, Shield } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import React, { useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { useAuthStore, hasRole } from "@/lib/auth";
+import { LogOut, Shield } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const DashboardPage: React.FC = () => {
   const { user, logout, language } = useAuthStore();
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Redirect students to their specific dashboard
+  useEffect(() => {
+    if (user && user.role === "student") {
+      navigate("/student", { replace: true });
+      return;
+    }
+  }, [user, navigate]);
+
   const handleLogout = () => {
     logout();
     toast({
-      title: language === 'en' ? 'Logged out' : 'Sessão encerrada',
-      description: language === 'en' 
-        ? 'You have been successfully logged out' 
-        : 'Você foi desconectado com sucesso',
+      title: language === "en" ? "Logged out" : "Sessão encerrada",
+      description:
+        language === "en"
+          ? "You have been successfully logged out"
+          : "Você foi desconectado com sucesso",
     });
-    navigate('/');
+    navigate("/");
   };
 
   if (!user) {
-    navigate('/login');
+    navigate("/login");
     return null;
   }
 
@@ -31,26 +39,26 @@ const DashboardPage: React.FC = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">
-          {language === 'en' ? 'Dashboard' : 'Painel de Controle'}
+          {language === "en" ? "Dashboard" : "Painel de Controle"}
         </h1>
         <div className="flex items-center gap-3">
-          {hasRole(user, 'admin') && (
-            <Button 
+          {hasRole(user, "admin") && (
+            <Button
               variant="default"
-              onClick={() => navigate('/admin')}
+              onClick={() => navigate("/admin")}
               className="flex items-center gap-2"
             >
               <Shield size={18} />
-              {language === 'en' ? 'Admin Panel' : 'Painel Admin'}
+              {language === "en" ? "Admin Panel" : "Painel Admin"}
             </Button>
           )}
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={handleLogout}
             className="flex items-center gap-2"
           >
             <LogOut size={18} />
-            {language === 'en' ? 'Sign Out' : 'Sair'}
+            {language === "en" ? "Sign Out" : "Sair"}
           </Button>
         </div>
       </div>
@@ -58,9 +66,9 @@ const DashboardPage: React.FC = () => {
       <div className="bg-white shadow-md rounded-lg p-6">
         <div className="flex items-center gap-4 mb-4">
           {user.avatar && (
-            <img 
-              src={user.avatar} 
-              alt={user.name} 
+            <img
+              src={user.avatar}
+              alt={user.name}
               className="w-16 h-16 rounded-full"
             />
           )}
@@ -75,12 +83,12 @@ const DashboardPage: React.FC = () => {
 
         <div className="mt-8">
           <h3 className="text-lg font-semibold mb-4">
-            {language === 'en' ? 'Recent Activity' : 'Atividade Recente'}
+            {language === "en" ? "Recent Activity" : "Atividade Recente"}
           </h3>
           <p className="text-gray-600">
-            {language === 'en' 
-              ? 'No recent activity to show.' 
-              : 'Nenhuma atividade recente para mostrar.'}
+            {language === "en"
+              ? "No recent activity to show."
+              : "Nenhuma atividade recente para mostrar."}
           </p>
         </div>
       </div>

@@ -1,9 +1,8 @@
-
-import React, { ReactNode, useEffect } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuthStore, UserRole, hasRole } from '@/lib/auth';
-import { t } from '@/lib/i18n';
-import { useToast } from '@/hooks/use-toast';
+import React, { ReactNode, useEffect } from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuthStore, UserRole, hasRole } from "@/lib/auth";
+import { t } from "@/lib/i18n";
+import { useToast } from "@/hooks/use-toast";
 
 interface AuthWrapperProps {
   children: ReactNode;
@@ -21,10 +20,11 @@ const AuthWrapper: React.FC<AuthWrapperProps> = ({
   useEffect(() => {
     if (isAuthenticated && !hasRole(user, allowedRoles)) {
       toast({
-        title: t('unauthorized', language),
-        description: language === 'en' 
-          ? `You don't have permission to access this page.`
-          : `Você não tem permissão para acessar esta página.`,
+        title: t("unauthorized", language),
+        description:
+          language === "en"
+            ? `You don't have permission to access this page.`
+            : `Você não tem permissão para acessar esta página.`,
         variant: "destructive",
       });
     }
@@ -35,7 +35,9 @@ const AuthWrapper: React.FC<AuthWrapperProps> = ({
   }
 
   if (!hasRole(user, allowedRoles)) {
-    return <Navigate to="/dashboard" replace />;
+    // Redirect based on user role
+    const redirectPath = user?.role === "student" ? "/student" : "/dashboard";
+    return <Navigate to={redirectPath} replace />;
   }
 
   return <>{children}</>;

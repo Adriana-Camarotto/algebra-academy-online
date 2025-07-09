@@ -1,14 +1,15 @@
-import React from 'react';
-import { useAuthStore } from '@/lib/auth';
-import { Clock, CreditCard, Users } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { format } from 'date-fns';
-import { useBookingLogic } from '@/hooks/useBookingLogic';
-import ProgressSteps from './booking/ProgressSteps';
-import ServiceSelection from './booking/ServiceSelection';
-import DateTimeSelection from './booking/DateTimeSelection';
-import BookingSummary from './booking/BookingSummary';
-import StudentEmailDialog from './booking/StudentEmailDialog';
+import React from "react";
+import { useAuthStore } from "@/lib/auth";
+import { Clock, CreditCard, Users } from "lucide-react";
+import { motion } from "framer-motion";
+import { format } from "date-fns";
+// import { useBookingLogic } from '@/hooks/useBookingLogic';
+import { useBookingLogic } from "@/hooks/useBookingLogic";
+import ProgressSteps from "./booking/ProgressSteps";
+import ServiceSelection from "./booking/ServiceSelection";
+import DateTimeSelection from "./booking/DateTimeSelection";
+import BookingSummary from "./booking/BookingSummary";
+import StudentEmailDialog from "./booking/StudentEmailDialog";
 
 interface BookingWizardProps {
   onComplete?: () => void;
@@ -16,7 +17,7 @@ interface BookingWizardProps {
 
 const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
   const { language, user } = useAuthStore();
-  
+
   const {
     currentStep,
     selectedService,
@@ -42,75 +43,85 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
     isTimeSlotAvailable,
     handleConfirmBooking,
     handleStudentEmailSubmit,
-    toast
+    toast,
   } = useBookingLogic(language, user);
 
   // Services data
   const services = [
     {
-      id: 'individual',
-      name: language === 'en' ? 'Individual Tutoring' : 'Tutoria Individual',
-      description: language === 'en' 
-        ? 'One-on-one personalized math tutoring sessions' 
-        : 'Sessões de tutoria de matemática personalizada individual',
-      price: '£0.30',
-      duration: '60 min',
-      icon: <Clock className="h-6 w-6" />
+      id: "individual",
+      name: language === "en" ? "Individual Tutoring" : "Tutoria Individual",
+      description:
+        language === "en"
+          ? "One-on-one personalized math tutoring sessions"
+          : "Sessões de tutoria de matemática personalizada individual",
+      price: "£0.30",
+      duration: "60 min",
+      icon: <Clock className="h-6 w-6" />,
     },
     {
-      id: 'group',
-      name: language === 'en' ? 'Group Sessions' : 'Sessões em Grupo',
-      description: language === 'en' 
-        ? 'Small group math tutoring sessions (2-4 students) - 6 classes total' 
-        : 'Sessões de tutoria de matemática em pequenos grupos (2-4 alunos) - 6 aulas no total',
-      price: '£0.30',
-      duration: '60 min',
-      icon: <Users className="h-6 w-6" />
+      id: "group",
+      name: language === "en" ? "Group Sessions" : "Sessões em Grupo",
+      description:
+        language === "en"
+          ? "Small group math tutoring sessions (2-4 students) - 6 classes total"
+          : "Sessões de tutoria de matemática em pequenos grupos (2-4 alunos) - 6 aulas no total",
+      price: "£0.30",
+      duration: "60 min",
+      icon: <Users className="h-6 w-6" />,
     },
     {
-      id: 'exam-prep',
-      name: language === 'en' ? 'Exam Preparation' : 'Preparação para Exames',
-      description: language === 'en' 
-        ? 'Intensive exam preparation sessions' 
-        : 'Sessões intensivas de preparação para exames',
-      price: '£0.30',
-      duration: '60 min',
-      icon: <CreditCard className="h-6 w-6" />
-    }
+      id: "exam-prep",
+      name: language === "en" ? "Exam Preparation" : "Preparação para Exames",
+      description:
+        language === "en"
+          ? "Intensive exam preparation sessions"
+          : "Sessões intensivas de preparação para exames",
+      price: "£0.30",
+      duration: "60 min",
+      icon: <CreditCard className="h-6 w-6" />,
+    },
   ];
 
   const daysTranslation = {
-    'monday': language === 'en' ? 'Monday' : 'Segunda',
-    'tuesday': language === 'en' ? 'Tuesday' : 'Terça',
-    'wednesday': language === 'en' ? 'Wednesday' : 'Quarta',
-    'thursday': language === 'en' ? 'Thursday' : 'Quinta',
-    'friday': language === 'en' ? 'Friday' : 'Sexta',
+    monday: language === "en" ? "Monday" : "Segunda",
+    tuesday: language === "en" ? "Tuesday" : "Terça",
+    wednesday: language === "en" ? "Wednesday" : "Quarta",
+    thursday: language === "en" ? "Thursday" : "Quinta",
+    friday: language === "en" ? "Friday" : "Sexta",
   };
 
   const steps = [
-    { number: 1, title: language === 'en' ? 'Choose Service' : 'Escolher Serviço' },
-    { number: 2, title: language === 'en' ? 'Date & Time' : 'Data e Horário' },
-    { number: 3, title: language === 'en' ? 'Payment' : 'Pagamento' }
+    {
+      number: 1,
+      title: language === "en" ? "Choose Service" : "Escolher Serviço",
+    },
+    { number: 2, title: language === "en" ? "Date & Time" : "Data e Horário" },
+    { number: 3, title: language === "en" ? "Payment" : "Pagamento" },
   ];
 
   const handleTimeSelect = (time: string) => {
-    if (selectedDate && selectedDay && isTimeSlotAvailable(selectedDay, time, selectedDate)) {
+    if (
+      selectedDate &&
+      selectedDay &&
+      isTimeSlotAvailable(selectedDay, time, selectedDate)
+    ) {
       setSelectedTime(time);
     }
   };
 
   const handleTabChange = (day: string) => {
     setSelectedTime(null);
-    
+
     if (selectedDate) {
       const dayMap = {
-        1: 'monday',
-        2: 'tuesday', 
-        3: 'wednesday',
-        4: 'thursday',
-        5: 'friday'
+        1: "monday",
+        2: "tuesday",
+        3: "wednesday",
+        4: "thursday",
+        5: "friday",
       };
-      
+
       const selectedWeekday = dayMap[selectedDate.getDay()];
       if (selectedWeekday !== day) {
         setSelectedDate(undefined);
@@ -126,10 +137,11 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
 
     if (!isDateAvailable(date)) {
       toast({
-        title: language === 'en' ? 'Date Not Available' : 'Data Não Disponível',
-        description: language === 'en' 
-          ? 'This date has no available time slots. Please select a different date.' 
-          : 'Esta data não tem horários disponíveis. Por favor, selecione uma data diferente.',
+        title: language === "en" ? "Date Not Available" : "Data Não Disponível",
+        description:
+          language === "en"
+            ? "This date has no available time slots. Please select a different date."
+            : "Esta data não tem horários disponíveis. Por favor, selecione uma data diferente.",
         variant: "destructive",
       });
       return;
@@ -144,12 +156,16 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
   };
 
   const handleNextStep = () => {
-    if (currentStep === 1 && (!selectedService || (selectedService === 'individual' && !lessonType))) {
+    if (
+      currentStep === 1 &&
+      (!selectedService || (selectedService === "individual" && !lessonType))
+    ) {
       toast({
-        title: language === 'en' ? 'Selection Required' : 'Seleção Obrigatória',
-        description: language === 'en' 
-          ? 'Please select a service and lesson type to continue.' 
-          : 'Por favor, selecione um serviço e tipo de aula para continuar.',
+        title: language === "en" ? "Selection Required" : "Seleção Obrigatória",
+        description:
+          language === "en"
+            ? "Please select a service and lesson type to continue."
+            : "Por favor, selecione um serviço e tipo de aula para continuar.",
         variant: "destructive",
       });
       return;
@@ -157,10 +173,12 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
 
     if (currentStep === 2 && (!selectedDay || !selectedTime || !selectedDate)) {
       toast({
-        title: language === 'en' ? 'Incomplete Selection' : 'Seleção Incompleta',
-        description: language === 'en' 
-          ? 'Please select a date, day and time for your lesson.' 
-          : 'Por favor, selecione uma data, dia e horário para sua aula.',
+        title:
+          language === "en" ? "Incomplete Selection" : "Seleção Incompleta",
+        description:
+          language === "en"
+            ? "Please select a date, day and time for your lesson."
+            : "Por favor, selecione uma data, dia e horário para sua aula.",
         variant: "destructive",
       });
       return;
