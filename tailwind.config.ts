@@ -79,7 +79,7 @@ export default {
           secondary: "#e6751a",
           accent: "#9acd32",
           light: "#f5f7fa",
-          dark: "#263238",
+          dark: "#ff1387",
         },
       },
       borderRadius: {
@@ -164,8 +164,8 @@ export default {
         "spin-slow": "spin-slow 8s linear infinite",
       },
       backgroundImage: {
-        'hero-pattern': 'linear-gradient(120deg, #ff1387 0%, #d10968 100%)',
-        'math-gradient': 'linear-gradient(90deg, #ff1387 0%, #d10968 100%)',
+        'hero-pattern': 'linear-gradient(120deg, #ff8933 0%, #e6751a 100%)',
+        'math-gradient': 'linear-gradient(90deg, #ff8933 0%, #e6751a 100%)',
       },
     },
   },
