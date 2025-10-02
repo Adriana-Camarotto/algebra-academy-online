@@ -1,0 +1,15 @@
+<svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="56" height="56" rx="14" fill="#1a237e"/>
+  <g font-family="Inter, Arial, sans-serif" font-weight="bold">
+    <text x="10" y="32" font-size="22" fill="#fff">Calcul</text>
+    <text x="44" y="32" font-size="22" fill="#ff9800">8</text>
+    <ellipse cx="44" cy="20" rx="7" ry="3.5" fill="#ff9800" opacity="0.18"/>
+    <path d="M38 20 Q44 7 50 20" stroke="#ff9800" stroke-width="2" fill="none"/>
+    <text x="12" y="48" font-size="11" fill="#ff9800" font-weight="normal">Tutoring</text>
+  </g>
+  <g>
+    <circle cx="28" cy="44" r="4" fill="#ff9800" opacity="0.7"/>
+    <rect x="24" y="40" width="8" height="8" rx="2" fill="#fff" opacity="0.7"/>
+    <text x="26" y="47" font-size="8" fill="#1a237e" font-weight="bold">π</text>
+  </g>
+</svg>

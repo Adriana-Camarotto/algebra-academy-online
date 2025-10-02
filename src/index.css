@@ -1,0 +1,183 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 206 48% 18%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 206 48% 18%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 206 48% 18%;
+
+    --primary: 203 46% 36%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 197 54% 69%;
+    --secondary-foreground: 206 48% 18%;
+
+    --muted: 0 0% 96%;
+    --muted-foreground: 206 24% 45%;
+
+    --accent: 48 95% 57%;
+    --accent-foreground: 206 48% 18%;
+
+    --destructive: 15 93% 53%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 90%;
+    --input: 0 0% 95%;
+    --ring: 203 46% 36%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 206 48% 18%;
+    --sidebar-primary: 203 46% 36%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 197 54% 95%;
+    --sidebar-accent-foreground: 206 48% 18%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 203 46% 36%;
+  }
+
+  .dark {
+    --background: 206 48% 12%;
+    --foreground: 206 24% 90%;
+
+    --card: 206 48% 15%;
+    --card-foreground: 206 24% 90%;
+
+    --popover: 206 48% 15%;
+    --popover-foreground: 206 24% 90%;
+
+    --primary: 203 46% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 197 54% 60%;
+    --secondary-foreground: 206 48% 12%;
+
+    --muted: 206 48% 18%;
+    --muted-foreground: 206 24% 70%;
+
+    --accent: 48 95% 57%;
+    --accent-foreground: 206 48% 12%;
+
+    --destructive: 15 93% 53%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 206 48% 20%;
+    --input: 206 48% 20%;
+    --ring: 203 46% 45%;
+
+    --sidebar-background: 206 48% 8%;
+    --sidebar-foreground: 206 24% 85%;
+    --sidebar-primary: 203 46% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 206 48% 15%;
+    --sidebar-accent-foreground: 206 24% 85%;
+    --sidebar-border: 206 48% 20%;
+    --sidebar-ring: 203 46% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Inter", sans-serif;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-bold tracking-tight;
+  }
+  .math-symbol {
+    font-family: "Cambria Math", serif;
+  }
+}
+
+@layer components {
+  .hero-section {
+    @apply relative overflow-hidden bg-math-gradient text-white py-24 px-6 md:px-12 lg:px-24;
+  }
+
+  .floating-element {
+    @apply absolute opacity-20 pointer-events-none animate-float;
+  }
+
+  .math-card {
+    @apply bg-white rounded-2xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl border border-transparent hover:border-tutor-accent;
+  }
+
+  .gradient-text {
+    @apply text-transparent bg-clip-text bg-math-gradient;
+  }
+
+  .nav-link {
+    @apply relative px-4 py-2 text-foreground hover:text-primary transition-colors duration-300;
+  }
+
+  .nav-link::after {
+    content: "";
+    @apply absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300;
+  }
+
+  .nav-link:hover::after {
+    @apply w-full;
+  }
+
+  .btn-primary {
+    @apply bg-tutor-primary hover:bg-tutor-primary/90 text-white px-5 py-2.5 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg;
+  }
+
+  .btn-secondary {
+    @apply bg-tutor-secondary hover:bg-tutor-secondary/90 text-white px-5 py-2.5 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg;
+  }
+
+  .btn-accent {
+    @apply bg-tutor-accent hover:bg-tutor-accent/90 text-white px-5 py-2.5 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg;
+  }
+
+  .language-selector {
+    @apply flex items-center gap-2 text-sm cursor-pointer hover:text-primary transition-colors duration-300;
+  }
+}
+
+/* Revolutionary animations for My Services section */
+@keyframes mesh-move {
+  0%,
+  100% {
+    background-position: 0% 0%, 100% 100%, 100% 0%, 0% 100%;
+  }
+  25% {
+    background-position: 100% 0%, 0% 100%, 0% 0%, 100% 100%;
+  }
+  50% {
+    background-position: 100% 100%, 0% 0%, 0% 100%, 100% 0%;
+  }
+  75% {
+    background-position: 0% 100%, 100% 0%, 100% 100%, 0% 0%;
+  }
+}
+
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.transform-gpu {
+  transform: translateZ(0);
+}
+
+.shadow-4xl {
+  box-shadow: 0 35px 100px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+}
