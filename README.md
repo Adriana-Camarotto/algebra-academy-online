@@ -158,14 +158,18 @@ Each directory contains its own README with detailed information about contents 
 ## 🛠️ Development Tools
 
 ### Database Scripts
+
 All SQL scripts are organized in `/scripts/sql/` with categories:
+
 - Setup and configuration scripts
-- Testing and validation scripts  
+- Testing and validation scripts
 - Maintenance and cleanup scripts
 - Emergency repair scripts
 
 ### Utility Scripts
+
 Helper scripts and automation tools are in `/scripts/`:
+
 - Deployment automation
 - Configuration management
 - Testing utilities

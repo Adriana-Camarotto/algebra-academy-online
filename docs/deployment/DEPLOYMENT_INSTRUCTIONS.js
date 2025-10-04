@@ -14,7 +14,7 @@ MANUAL DEPLOYMENT OPTIONS:
    - Save and deploy
 
 2. Via CLI (if available):
-   npx supabase functions deploy create-payment --project-ref rnhibdbxfbminqseayos
+   npx supabase functions deploy create-payment --project-ref YOUR_PROJECT_REF
 
 3. Alternative: Create new function version
    - The fix changes metadata from booking_ids.join(",") to safe object structure
