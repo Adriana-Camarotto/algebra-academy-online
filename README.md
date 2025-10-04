@@ -1,8 +1,25 @@
-# Calcul8
+# Algebra Academy Online
 
 ## 🎓 About the Project
 
 Complete mathematics tutoring booking system with secure Stripe payment integration, administrative dashboard, and intelligent reservation system.
+
+## 📁 Project Structure
+
+```
+algebra-academy-online/
+├── src/                    # React application source code
+├── supabase/              # Edge functions and database
+├── docs/                  # Documentation (organized by category)
+│   ├── guides/           # User and admin guides
+│   ├── troubleshooting/  # Problem resolution docs
+│   └── deployment/       # Deployment instructions
+├── scripts/              # Utility scripts and automation
+│   ├── sql/             # Database scripts and maintenance
+│   └── deployment/      # Build and deploy automation
+├── public/              # Static assets
+└── utils/               # Utility functions
+```
 
 ## 🚀 How to Test the Payment System
 
@@ -126,6 +143,32 @@ npm i
 # Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
+
+## 📚 Documentation
+
+The project documentation is now organized in the `/docs` directory:
+
+- **[/docs/guides/](docs/guides/)** - User and admin operational guides
+- **[/docs/troubleshooting/](docs/troubleshooting/)** - Problem resolution documentation
+- **[/docs/deployment/](docs/deployment/)** - Deployment and configuration instructions
+- **[/scripts/sql/](scripts/sql/)** - Database scripts and maintenance tools
+
+Each directory contains its own README with detailed information about contents and usage.
+
+## 🛠️ Development Tools
+
+### Database Scripts
+All SQL scripts are organized in `/scripts/sql/` with categories:
+- Setup and configuration scripts
+- Testing and validation scripts  
+- Maintenance and cleanup scripts
+- Emergency repair scripts
+
+### Utility Scripts
+Helper scripts and automation tools are in `/scripts/`:
+- Deployment automation
+- Configuration management
+- Testing utilities
 
 **Edit a file directly in GitHub**
 
